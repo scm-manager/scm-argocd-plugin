@@ -22,14 +22,8 @@
  * SOFTWARE.
  */
 
-import { binder } from "@scm-manager/ui-extensions";
-import ArgoCDWebhookConfigurationForm from "./ArgoCDWebhookConfigurationForm";
-
-binder.bind("webhook.configuration.ArgoCDWebhook", ArgoCDWebhookConfigurationForm);
-binder.bind("webhook.configurations", {
-  name: "ArgoCDWebhook",
-  defaultConfiguration: {
-    url: "",
-    secret: ""
-  }
-});
+export type ArgoCDWebhook = {
+  url: string;
+  secret: string;
+  insecure: boolean;
+ }

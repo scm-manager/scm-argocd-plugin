@@ -22,14 +22,15 @@
  * SOFTWARE.
  */
 
-import { binder } from "@scm-manager/ui-extensions";
-import ArgoCDWebhookConfigurationForm from "./ArgoCDWebhookConfigurationForm";
+package com.cloudogu.argocd;
 
-binder.bind("webhook.configuration.ArgoCDWebhook", ArgoCDWebhookConfigurationForm);
-binder.bind("webhook.configurations", {
-  name: "ArgoCDWebhook",
-  defaultConfiguration: {
-    url: "",
-    secret: ""
+public class ArgoCDHookExecutionException extends RuntimeException {
+
+  protected ArgoCDHookExecutionException(String message, Exception cause) {
+    super(message, cause);
   }
-});
+
+  protected ArgoCDHookExecutionException(String message) {
+    super(message);
+  }
+}
