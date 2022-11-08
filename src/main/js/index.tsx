@@ -23,5 +23,14 @@
  */
 
 import { binder } from "@scm-manager/ui-extensions";
+import ArgoCDWebhookConfigurationForm from "./ArgoCDWebhookConfigurationForm";
 
-binder.bind("", "");
+binder.bind("webhook.configuration.ArgoCDWebhook", ArgoCDWebhookConfigurationForm);
+binder.bind("webhook.configurations", {
+  name: "ArgoCDWebhook",
+  defaultConfiguration: {
+    //TODO define payload
+    url: "",
+    payload: ""
+  }
+});

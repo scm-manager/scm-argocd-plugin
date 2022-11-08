@@ -28,12 +28,12 @@ plugins {
 
 dependencies {
   // define dependencies to other plugins here e.g.:
-   plugin "sonia.scm.plugins:scm-webhook-plugin:2.2.0"
+   plugin "sonia.scm.plugins:scm-webhook-plugin:2.2.2-SNAPSHOT"
   // optionalPlugin "sonia.scm.plugins:scm-editor-plugin:2.0.0"
 }
 
 scmPlugin {
-  scmVersion = "2.2.2-SNAPSHOT"
+  scmVersion = "2.19.0"
   displayName = "Argo CD"
   description = "Integrates Argo CD build pipelines"
 

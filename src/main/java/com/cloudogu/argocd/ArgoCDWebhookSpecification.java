@@ -24,18 +24,15 @@
 
 package com.cloudogu.argocd;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import sonia.scm.plugin.Extension;
+import sonia.scm.webhook.SingleWebHookConfiguration;
+import sonia.scm.webhook.WebHookSpecification;
 
-@Path("v2/sample")
-class SampleResource {
+@Extension
+public class ArgoCDWebhookSpecification implements WebHookSpecification {
 
-  @GET
-  @Produces(MediaType.TEXT_PLAIN)
-  public String sample() {
-    return "Sample";
+  @Override
+  public Class<? extends SingleWebHookConfiguration> getSpecificationType() {
+    return ArgoCDWebhook.class;
   }
-
 }
