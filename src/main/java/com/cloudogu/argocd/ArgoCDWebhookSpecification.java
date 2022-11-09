@@ -50,11 +50,6 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
   }
 
   @Override
-  public boolean handles(Class aClass) {
-    return ArgoCDWebhook.class.isAssignableFrom(aClass);
-  }
-
-  @Override
   public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, Iterable<Changeset> changesets) {
     return new ArgoCDWebhookExecutor(clientProvider.get(), webHook, repository);
   }
