@@ -1,6 +1,9 @@
 {
   "scm-argocd-plugin": {
-
+    "config": {
+      "url": "Endpunkt URL",
+      "payload": "Ein Payload"
+    }
   },
   "webhooks": {
     "ArgoCDWebhook": {

@@ -28,7 +28,7 @@ import { ArgoCDWebhook } from "./ArgoCDWebhook";
 import { useTranslation } from "react-i18next";
 
 type Props = {
-  webHook: any;
+  webHook: { name: string; configuration: ArgoCDWebhook };
   readOnly: boolean;
   onChange: (p: ArgoCDWebhook, valid: boolean) => void;
 };
@@ -38,7 +38,6 @@ const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange
   const [t] = useTranslation("plugins");
 
   useEffect(() => {
-    console.log(webHook, webhookState)
     onChange(webhookState, isConfigValid());
   }, [webhookState]);
 
