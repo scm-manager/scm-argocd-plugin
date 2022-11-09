@@ -25,14 +25,37 @@
 package com.cloudogu.argocd;
 
 import sonia.scm.plugin.Extension;
-import sonia.scm.webhook.SingleWebHookConfiguration;
+import sonia.scm.repository.Changeset;
+import sonia.scm.repository.Repository;
+import sonia.scm.webhook.WebHookExecutor;
+import sonia.scm.webhook.WebHookHttpClient;
 import sonia.scm.webhook.WebHookSpecification;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
+
 @Extension
-public class ArgoCDWebhookSpecification implements WebHookSpecification {
+public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWebhook> {
+
+  private final Provider<WebHookHttpClient> clientProvider;
+
+  @Inject
+  public ArgoCDWebhookSpecification(Provider<WebHookHttpClient> clientProvider) {
+    this.clientProvider = clientProvider;
+  }
 
   @Override
-  public Class<? extends SingleWebHookConfiguration> getSpecificationType() {
+  public Class<ArgoCDWebhook> getSpecificationType() {
     return ArgoCDWebhook.class;
+  }
+
+  @Override
+  public boolean handles(Class aClass) {
+    return ArgoCDWebhook.class.isAssignableFrom(aClass);
+  }
+
+  @Override
+  public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, Iterable<Changeset> changesets) {
+    return new ArgoCDWebhookExecutor(clientProvider.get(), webHook, repository);
   }
 }
