@@ -1,32 +1,41 @@
 import { InputField } from "@scm-manager/ui-components";
-import React from "react";
-import { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { ArgoCDWebhook } from "./ArgoCDWebhook";
+import { useTranslation } from "react-i18next";
 
 type Props = {
-  webHook: ArgoCDWebhook;
+  webHook: any;
   readOnly: boolean;
-  onChange: (p: ArgoCDWebhook) => void;
-  onDelete: (p: ArgoCDWebhook) => void;
+  onChange: (p: ArgoCDWebhook, valid: boolean) => void;
 };
 
-const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange, onDelete }) => {
-  const [webhookState, setWebhookState] = useState<ArgoCDWebhook>(webHook);
+const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange }) => {
+  const [webhookState, setWebhookState] = useState<ArgoCDWebhook>(webHook.configuration);
+  const [t] = useTranslation("plugins");
+
+  useEffect(() => {
+    console.log(webHook, webhookState)
+    onChange(webhookState, isConfigValid());
+  }, [webhookState]);
+
+  const isConfigValid = () => !!webhookState.payload && !!webhookState.url;
 
   return (
     <>
       <InputField
-        label="URL"
+        label={t("scm-argocd-plugin.config.url")}
         value={webhookState.url}
         onChange={value => setWebhookState({ ...webhookState, url: value })}
+        readOnly={readOnly}
       />
       <InputField
-        label="PAYLOAD"
+        label={t("scm-argocd-plugin.config.payload")}
         value={webhookState.payload}
         onChange={value => setWebhookState({ ...webhookState, payload: value })}
+        readOnly={readOnly}
       />
     </>
   );
 };
 
-export default ArgoCDWebhookConfigurationForm
+export default ArgoCDWebhookConfigurationForm;
