@@ -2,7 +2,7 @@
   "scm-argocd-plugin": {
     "config": {
       "url": "Endpoint URL",
-      "payload": "Some payload"
+      "secret": "Secret (optional)"
     }
   },
   "webhooks": {

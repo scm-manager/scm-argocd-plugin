@@ -24,35 +24,36 @@
 
 package com.cloudogu.argocd;
 
-import sonia.scm.net.ahc.AdvancedHttpClient;
-import sonia.scm.plugin.Extension;
-import sonia.scm.repository.Changeset;
+import sonia.scm.ContextEntry;
+import sonia.scm.repository.Branch;
 import sonia.scm.repository.Repository;
-import sonia.scm.webhook.WebHookExecutor;
-import sonia.scm.webhook.WebHookSpecification;
+import sonia.scm.repository.api.RepositoryService;
+import sonia.scm.repository.api.RepositoryServiceFactory;
+import sonia.scm.repository.api.ScmProtocol;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
+import java.io.IOException;
+import java.util.stream.Collectors;
 
-@Extension
-public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWebhook> {
+public class ArgoCDWebhookPayloader {
 
-  private final Provider<AdvancedHttpClient> clientProvider;
-  private final ArgoCDWebhookPayloader payloader;
+  private final RepositoryServiceFactory serviceFactory;
 
   @Inject
-  public ArgoCDWebhookSpecification(Provider<AdvancedHttpClient> clientProvider, ArgoCDWebhookPayloader payloader) {
-    this.clientProvider = clientProvider;
-    this.payloader = payloader;
+  public ArgoCDWebhookPayloader(RepositoryServiceFactory serviceFactory) {
+    this.serviceFactory = serviceFactory;
   }
 
-  @Override
-  public Class<ArgoCDWebhook> getSpecificationType() {
-    return ArgoCDWebhook.class;
-  }
-
-  @Override
-  public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, Iterable<Changeset> changesets) {
-    return new ArgoCDWebhookExecutor(clientProvider.get(), payloader, webHook, repository);
+  public GitHubPushEventPayloadDto createPayload(Repository repository) {
+    try (RepositoryService service = serviceFactory.create(repository)) {
+      ScmProtocol scmProtocol = service.getSupportedProtocols().collect(Collectors.toList()).get(0);
+      String defaultBranch = service.getBranchesCommand().getBranches().getBranches().stream()
+        .filter(Branch::isDefaultBranch)
+        .findFirst().map(Branch::getName)
+        .orElse("");
+      return new GitHubPushEventPayloadDto(new GitHubRepository(scmProtocol.getUrl(), defaultBranch), "refs/heads/" + defaultBranch);
+    } catch (IOException e) {
+      throw new ArgoCDHookExecutionException(ContextEntry.ContextBuilder.entity(repository).build(), "Failed to create webhook payload", e);
+    }
   }
 }

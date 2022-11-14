@@ -24,25 +24,31 @@
 
 package com.cloudogu.argocd;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.codec.digest.HmacUtils;
+import sonia.scm.net.ahc.AdvancedHttpClient;
+import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
 import sonia.scm.repository.Repository;
-import sonia.scm.webhook.HttpMethod;
 import sonia.scm.webhook.WebHookExecutor;
-import sonia.scm.webhook.WebHookHttpClient;
 
-import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 
 import static sonia.scm.ContextEntry.ContextBuilder.entity;
 
 public class ArgoCDWebhookExecutor implements WebHookExecutor {
 
-  private final WebHookHttpClient client;
+  private final AdvancedHttpClient client;
+  private final ArgoCDWebhookPayloader payloader;
   private final ArgoCDWebhook webhook;
   private final Repository repository;
 
-  @Inject
-  public ArgoCDWebhookExecutor(WebHookHttpClient client, ArgoCDWebhook webhook, Repository repository) {
+  public ArgoCDWebhookExecutor(AdvancedHttpClient client, ArgoCDWebhookPayloader payloader, ArgoCDWebhook webhook, Repository repository) {
     this.client = client;
+    this.payloader = payloader;
     this.webhook = webhook;
     this.repository = repository;
   }
@@ -50,8 +56,20 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
   @Override
   public void run() {
     try {
-      // TODO: ??? This way we get the generic span kind "Webhook" in the trace monitor
-      client.execute(HttpMethod.POST, webhook.getUrl(), webhook.getPayload());
+      GitHubPushEventPayloadDto payload = payloader.createPayload(repository);
+      AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
+        .header("X-Github-Event", "push");
+
+      if (!Strings.isNullOrEmpty(webhook.getSecret())) {
+          request.header("X-Hub-Signature", "sha1=" + hmacSha1(webhook.getSecret(), payload));
+        }
+
+        request.spanKind("Webhook")
+        .contentType(MediaType.APPLICATION_JSON)
+        .jsonContent(payload)
+        .request()
+        .getStatus();
+
     } catch (IOException e) {
       throw new ArgoCDHookExecutionException(
         entity(Repository.class, repository.getNamespaceAndName().toString()).build(),
@@ -59,5 +77,10 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
         e
       );
     }
+  }
+
+  public static String hmacSha1(String key, GitHubPushEventPayloadDto value) throws JsonProcessingException {
+    String json = new ObjectMapper().writeValueAsString(value);
+    return new HmacUtils(HmacAlgorithms.HMAC_SHA_1, key).hmacHex(json.getBytes());
   }
 }

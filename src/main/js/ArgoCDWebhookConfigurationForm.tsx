@@ -41,7 +41,7 @@ const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange
     onChange(webhookState, isConfigValid());
   }, [webhookState]);
 
-  const isConfigValid = () => !!webhookState.payload && !!webhookState.url;
+  const isConfigValid = () => !!webhookState.url;
 
   return (
     <>
@@ -52,9 +52,10 @@ const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange
         readOnly={readOnly}
       />
       <InputField
-        label={t("scm-argocd-plugin.config.payload")}
-        value={webhookState.payload}
-        onChange={value => setWebhookState({ ...webhookState, payload: value })}
+        label={t("scm-argocd-plugin.config.secret")}
+        type="password"
+        value={webhookState.secret}
+        onChange={value => setWebhookState({ ...webhookState, secret: value })}
         readOnly={readOnly}
       />
     </>

@@ -24,28 +24,46 @@
 
 package com.cloudogu.argocd;
 
-
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-import sonia.scm.webhook.SingleWebHookConfiguration;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
+
+/*
+ * We use the GitHub Push Event instead of implementing our own webhook event definition into ArgoCD.
+ * We do not send information like the changed files or revisions on purpose.
+ * ArgoCD assumes if nothing has been sent that it must refresh all related cluster resources for that repository which is exactly what we want.
+ */
 @XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
-@ToString
-@EqualsAndHashCode
+@NoArgsConstructor
 @Getter
 @Setter
+public class GitHubPushEventPayloadDto {
+  private GitHubRepository repository;
+  private List<Object> commits;
+  private String ref;
+
+  public GitHubPushEventPayloadDto(GitHubRepository repository, String ref) {
+    this.repository = repository;
+    this.ref = ref;
+    this.commits = new ArrayList<>();
+  }
+}
+
 @AllArgsConstructor
 @NoArgsConstructor
-public class ArgoCDWebhook implements SingleWebHookConfiguration {
-  private String url;
-  private String secret;
+@Getter
+@Setter
+class GitHubRepository {
+  @XmlElement(name = "html_url")
+  private String htmlUrl;
+  @XmlElement(name = "default_branch")
+  private String defaultBranch;
 }
+

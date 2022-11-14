@@ -30,6 +30,8 @@ dependencies {
   // define dependencies to other plugins here e.g.:
    plugin "sonia.scm.plugins:scm-webhook-plugin:2.2.2-SNAPSHOT"
   // optionalPlugin "sonia.scm.plugins:scm-editor-plugin:2.0.0"
+
+  implementation "commons-codec:commons-codec:1.15"
 }
 
 scmPlugin {

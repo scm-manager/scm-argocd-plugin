@@ -29,8 +29,7 @@ binder.bind("webhook.configuration.ArgoCDWebhook", ArgoCDWebhookConfigurationFor
 binder.bind("webhook.configurations", {
   name: "ArgoCDWebhook",
   defaultConfiguration: {
-    //TODO define payload
     url: "",
-    payload: ""
+    secret: ""
   }
 });

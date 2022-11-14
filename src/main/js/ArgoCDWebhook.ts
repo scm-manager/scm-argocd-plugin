@@ -24,5 +24,5 @@
 
 export type ArgoCDWebhook = {
   url: string;
-  payload: string;
+  secret: string;
  }
