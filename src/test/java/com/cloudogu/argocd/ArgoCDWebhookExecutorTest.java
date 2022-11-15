@@ -41,6 +41,7 @@ import javax.ws.rs.core.MediaType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,7 +59,7 @@ class ArgoCDWebhookExecutorTest {
 
   @Mock
   private Content content;
-  private final GitHubPushEventPayloadDto payload = new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "master"), "master");
+  private final GitHubPushEventPayloadDto payload = new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "master"));
 
   private final Repository repository = RepositoryTestData.create42Puzzle();
 
@@ -66,7 +67,7 @@ class ArgoCDWebhookExecutorTest {
   void initClient() {
     when(client.post(any())).thenReturn(request);
     when(payloader.createPayload(repository)).thenReturn(payload);
-    when(request.getContent()).thenReturn(content);
+    lenient().when(request.getContent()).thenReturn(content);
   }
 
   @Test

@@ -26,7 +26,9 @@ package com.cloudogu.argocd;
 
 import sonia.scm.ContextEntry;
 import sonia.scm.repository.Branch;
+import sonia.scm.repository.InternalRepositoryException;
 import sonia.scm.repository.Repository;
+import sonia.scm.repository.api.Command;
 import sonia.scm.repository.api.RepositoryService;
 import sonia.scm.repository.api.RepositoryServiceFactory;
 import sonia.scm.repository.api.ScmProtocol;
@@ -46,12 +48,15 @@ public class ArgoCDWebhookPayloader {
 
   public GitHubPushEventPayloadDto createPayload(Repository repository) {
     try (RepositoryService service = serviceFactory.create(repository)) {
+      if (!service.isSupported(Command.BRANCHES)) {
+        throw new InternalRepositoryException(repository, "Repository does not support this type of webhook");
+      }
       ScmProtocol scmProtocol = service.getSupportedProtocols().collect(Collectors.toList()).get(0);
       String defaultBranch = service.getBranchesCommand().getBranches().getBranches().stream()
         .filter(Branch::isDefaultBranch)
         .findFirst().map(Branch::getName)
-        .orElse("");
-      return new GitHubPushEventPayloadDto(new GitHubRepository(scmProtocol.getUrl(), defaultBranch), "refs/heads/" + defaultBranch);
+        .orElseThrow(() -> new InternalRepositoryException(repository, "Could not find default branch"));
+      return new GitHubPushEventPayloadDto(new GitHubRepository(scmProtocol.getUrl(), defaultBranch));
     } catch (IOException e) {
       throw new ArgoCDHookExecutionException(ContextEntry.ContextBuilder.entity(repository).build(), "Failed to create webhook payload", e);
     }

@@ -31,10 +31,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import sonia.scm.repository.Branch;
 import sonia.scm.repository.Branches;
+import sonia.scm.repository.InternalRepositoryException;
 import sonia.scm.repository.Person;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
 import sonia.scm.repository.api.BranchesCommandBuilder;
+import sonia.scm.repository.api.Command;
 import sonia.scm.repository.api.RepositoryService;
 import sonia.scm.repository.api.RepositoryServiceFactory;
 import sonia.scm.repository.api.ScmProtocol;
@@ -46,6 +48,7 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.list;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -73,6 +76,7 @@ class ArgoCDWebhookPayloaderTest {
   @Test
   void shouldCreatePayload() throws IOException {
     when(serviceFactory.create(repository)).thenReturn(service);
+    when(service.isSupported(Command.BRANCHES)).thenReturn(true);
     when(service.getSupportedProtocols()).thenReturn(protocolStream);
     when(service.getBranchesCommand()).thenReturn(branchesCommandBuilder);
     when(branchesCommandBuilder.getBranches()).thenReturn(new Branches(List.of(Branch.defaultBranch("main", "123", 0L, Person.toPerson("")))));
@@ -94,5 +98,35 @@ class ArgoCDWebhookPayloaderTest {
     assertThat(payload.getCommits()).isEmpty();
     assertThat(payload.getRepository().getDefaultBranch()).isEqualTo("main");
     assertThat(payload.getRepository().getHtmlUrl()).isEqualTo("my-repo-url");
+  }
+
+  @Test
+  void shouldFailForUnsupportedRepoType() {
+    when(serviceFactory.create(repository)).thenReturn(service);
+    when(service.isSupported(Command.BRANCHES)).thenReturn(false);
+
+    assertThrows(InternalRepositoryException.class, () -> payloader.createPayload(repository));
+  }
+
+  @Test
+  void shouldFailForMissingDefaultBranch() throws IOException {
+    when(serviceFactory.create(repository)).thenReturn(service);
+    when(service.isSupported(Command.BRANCHES)).thenReturn(true);
+    when(service.getSupportedProtocols()).thenReturn(protocolStream);
+    when(service.getBranchesCommand()).thenReturn(branchesCommandBuilder);
+    when(branchesCommandBuilder.getBranches()).thenReturn(new Branches(List.of(Branch.normalBranch("main", "123", 0L, Person.toPerson("")))));
+    when(protocolStream.collect(any())).thenReturn(List.of(new ScmProtocol() {
+      @Override
+      public String getType() {
+        return "http";
+      }
+
+      @Override
+      public String getUrl() {
+        return "my-repo-url";
+      }
+    }));
+
+    assertThrows(InternalRepositoryException.class, () -> payloader.createPayload(repository));
   }
 }
