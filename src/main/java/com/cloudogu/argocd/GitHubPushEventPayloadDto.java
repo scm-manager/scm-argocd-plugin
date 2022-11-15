@@ -46,7 +46,7 @@ import java.util.List;
 @Setter
 public class GitHubPushEventPayloadDto {
   private GitHubRepository repository;
-  private List<Object> commits;
+  private List<String> commits;
   private String ref;
 
   public GitHubPushEventPayloadDto(GitHubRepository repository, String ref) {

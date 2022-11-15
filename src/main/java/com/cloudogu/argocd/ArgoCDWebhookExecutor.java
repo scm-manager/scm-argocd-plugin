@@ -24,8 +24,6 @@
 
 package com.cloudogu.argocd;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
@@ -35,6 +33,7 @@ import sonia.scm.repository.Repository;
 import sonia.scm.webhook.WebHookExecutor;
 
 import javax.ws.rs.core.MediaType;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static sonia.scm.ContextEntry.ContextBuilder.entity;
@@ -58,15 +57,21 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
     try {
       GitHubPushEventPayloadDto payload = payloader.createPayload(repository);
       AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
-        .header("X-Github-Event", "push");
+        //TODO Remove after testing
+        .disableCertificateValidation(true).disableHostnameValidation(true)
+        .header("X-Github-Event", "push")
+        .spanKind("Webhook")
+        .contentType(MediaType.APPLICATION_JSON)
+        .jsonContent(payload);
 
       if (!Strings.isNullOrEmpty(webhook.getSecret())) {
-          request.header("X-Hub-Signature", "sha1=" + hmacSha1(webhook.getSecret(), payload));
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+          request.getContent().process(baos);
+          request.header("X-Hub-Signature", "sha1=" + hmacSha1(webhook.getSecret(), baos.toString()));
         }
+      }
 
-        request.spanKind("Webhook")
-        .contentType(MediaType.APPLICATION_JSON)
-        .jsonContent(payload)
+      request
         .request()
         .getStatus();
 
@@ -79,8 +84,7 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
     }
   }
 
-  public static String hmacSha1(String key, GitHubPushEventPayloadDto value) throws JsonProcessingException {
-    String json = new ObjectMapper().writeValueAsString(value);
-    return new HmacUtils(HmacAlgorithms.HMAC_SHA_1, key).hmacHex(json.getBytes());
+  public static String hmacSha1(String key, String json) {
+    return new HmacUtils(HmacAlgorithms.HMAC_SHA_1, key).hmacHex(json);
   }
 }
