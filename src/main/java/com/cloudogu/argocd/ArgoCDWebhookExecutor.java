@@ -58,7 +58,7 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
       GitHubPushEventPayloadDto payload = payloader.createPayload(repository);
       AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
         //TODO Remove after testing
-        .disableCertificateValidation(true).disableHostnameValidation(true)
+//        .disableCertificateValidation(true).disableHostnameValidation(true)
         .header("X-Github-Event", "push")
         .spanKind("Webhook")
         .contentType(MediaType.APPLICATION_JSON)
@@ -67,13 +67,13 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
       if (!Strings.isNullOrEmpty(webhook.getSecret())) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
           request.getContent().process(baos);
-          request.header("X-Hub-Signature", "sha1=" + hmacSha1(webhook.getSecret(), baos.toString()));
+          String digest = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, webhook.getSecret()).hmacHex(baos.toByteArray());
+          request.header("X-Hub-Signature", "sha1=" + digest);
         }
       }
 
       request
-        .request()
-        .getStatus();
+        .request();
 
     } catch (IOException e) {
       throw new ArgoCDHookExecutionException(
@@ -82,9 +82,5 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
         e
       );
     }
-  }
-
-  public static String hmacSha1(String key, String json) {
-    return new HmacUtils(HmacAlgorithms.HMAC_SHA_1, key).hmacHex(json);
   }
 }

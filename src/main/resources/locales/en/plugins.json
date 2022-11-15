@@ -1,8 +1,10 @@
 {
   "scm-argocd-plugin": {
     "config": {
-      "url": "Endpoint URL",
-      "secret": "Secret (optional)"
+      "url": "Webhook URL",
+      "urlHelpText": "The complete ArgoCD webhook endpoint url, e.g.: \"https://my-argo.cloudogu.net/api/webhook\"",
+      "secret": "Secret (optional)",
+      "secretHelpText": "Optional GitHub Secret for ArgoCD webhooks. The same secret must be configured as GitHub secret inside the ArgoCD secret in your cluster. \nGuide: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/webhook.md"
     }
   },
   "webhooks": {

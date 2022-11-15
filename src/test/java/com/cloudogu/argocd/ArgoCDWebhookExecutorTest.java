@@ -32,12 +32,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
+import sonia.scm.net.ahc.Content;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
 
 import javax.ws.rs.core.MediaType;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,18 +50,23 @@ class ArgoCDWebhookExecutorTest {
   @Mock
   private AdvancedHttpClient client;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  @Mock(answer = Answers.RETURNS_SELF)
   private AdvancedHttpRequestWithBody request;
 
   @Mock
   private ArgoCDWebhookPayloader payloader;
+
+  @Mock
+  private Content content;
+  private final GitHubPushEventPayloadDto payload = new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "master"), "master");
 
   private final Repository repository = RepositoryTestData.create42Puzzle();
 
   @BeforeEach
   void initClient() {
     when(client.post(any())).thenReturn(request);
-    when(payloader.createPayload(repository)).thenReturn(new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "master"), "master"));
+    when(payloader.createPayload(repository)).thenReturn(payload);
+    when(request.getContent()).thenReturn(content);
   }
 
   @Test
@@ -67,10 +75,10 @@ class ArgoCDWebhookExecutorTest {
 
     executor.run();
 
-//    verify(request).header("X-Github-Event", "push");
-//    verify(request).spanKind("Webhook");
-//    verify(request).contentType(MediaType.APPLICATION_JSON);
-//    verify(request).jsonContent(null);
+    verify(request).header("X-Github-Event", "push");
+    verify(request).spanKind("Webhook");
+    verify(request).contentType(MediaType.APPLICATION_JSON);
+    verify(request).jsonContent(payload);
   }
 
   @Test
@@ -79,11 +87,11 @@ class ArgoCDWebhookExecutorTest {
 
     executor.run();
 
-//    verify(request).header("X-Github-Event", "push");
-//    verify(request).header("X-Hub-Signature", "8c47d17aef9e7111c455271cd7fce569ced1a590");
-//    verify(request).spanKind("Webhook");
-//    verify(request).contentType(MediaType.APPLICATION_JSON);
-//    verify(request).jsonContent(null);
+    verify(request).header("X-Github-Event", "push");
+    verify(request).header("X-Hub-Signature", "sha1=22c2bbe31bd7e8cea1169f6cbbf89f7935a6116a");
+    verify(request).spanKind("Webhook");
+    verify(request).contentType(MediaType.APPLICATION_JSON);
+    verify(request).jsonContent(payload);
   }
 
   private ArgoCDWebhookExecutor createExecutor(ArgoCDWebhook webhook) {

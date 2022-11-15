@@ -47,12 +47,14 @@ const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange
     <>
       <InputField
         label={t("scm-argocd-plugin.config.url")}
+        helpText={t("scm-argocd-plugin.config.urlHelpText")}
         value={webhookState.url}
         onChange={value => setWebhookState({ ...webhookState, url: value })}
         readOnly={readOnly}
       />
       <InputField
         label={t("scm-argocd-plugin.config.secret")}
+        helpText={t("scm-argocd-plugin.config.secretHelpText")}
         type="password"
         value={webhookState.secret}
         onChange={value => setWebhookState({ ...webhookState, secret: value })}
