@@ -26,7 +26,7 @@ package com.cloudogu.argocd;
 
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.plugin.Extension;
-import sonia.scm.repository.Changeset;
+import sonia.scm.repository.PostReceiveRepositoryHookEvent;
 import sonia.scm.repository.Repository;
 import sonia.scm.webhook.WebHookExecutor;
 import sonia.scm.webhook.WebHookSpecification;
@@ -52,7 +52,12 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
   }
 
   @Override
-  public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, Iterable<Changeset> changesets) {
+  public boolean supportsRepository(Repository repository) {
+    return "git".equals(repository.getType());
+  }
+
+  @Override
+  public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, PostReceiveRepositoryHookEvent event) {
     return new ArgoCDWebhookExecutor(clientProvider.get(), payloader, webHook, repository);
   }
 }
