@@ -29,36 +29,44 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
+import sonia.scm.repository.PostReceiveRepositoryHookEvent;
 import sonia.scm.repository.Repository;
+import sonia.scm.repository.api.HookBranchProvider;
 import sonia.scm.webhook.WebHookExecutor;
 
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static sonia.scm.ContextEntry.ContextBuilder.entity;
-
 public class ArgoCDWebhookExecutor implements WebHookExecutor {
 
   private final AdvancedHttpClient client;
-  private final ArgoCDWebhookPayloader payloader;
+  private final ArgoCDWebhookPayloadGenerator payloader;
   private final ArgoCDWebhook webhook;
   private final Repository repository;
+  private final PostReceiveRepositoryHookEvent event;
 
-  public ArgoCDWebhookExecutor(AdvancedHttpClient client, ArgoCDWebhookPayloader payloader, ArgoCDWebhook webhook, Repository repository) {
+  public ArgoCDWebhookExecutor(AdvancedHttpClient client, ArgoCDWebhookPayloadGenerator payloader, ArgoCDWebhook webhook, Repository repository, PostReceiveRepositoryHookEvent event) {
     this.client = client;
     this.payloader = payloader;
     this.webhook = webhook;
     this.repository = repository;
+    this.event = event;
   }
 
   @Override
   public void run() {
+    HookBranchProvider branchProvider = event.getContext().getBranchProvider();
+    branchProvider.getCreatedOrModified().forEach(this::sendEvent);
+    branchProvider.getDeletedOrClosed().forEach(this::sendEvent);
+  }
+
+  private void sendEvent(String branch) {
     try {
-      GitHubPushEventPayloadDto payload = payloader.createPayload(repository);
+      GitHubPushEventPayloadDto payload = payloader.createPayload(repository, branch);
       AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
         //TODO Remove after testing
-//        .disableCertificateValidation(true).disableHostnameValidation(true)
+        .disableCertificateValidation(true).disableHostnameValidation(true)
         .header("X-Github-Event", "push")
         .spanKind("Webhook")
         .contentType(MediaType.APPLICATION_JSON)
@@ -77,7 +85,6 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
 
     } catch (IOException e) {
       throw new ArgoCDHookExecutionException(
-        entity(Repository.class, repository.getNamespaceAndName().toString()).build(),
         "Could not execute ArgoCD webhook",
         e
       );

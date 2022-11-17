@@ -33,14 +33,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
 import sonia.scm.net.ahc.Content;
+import sonia.scm.repository.PostReceiveRepositoryHookEvent;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
 
 import javax.ws.rs.core.MediaType;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,23 +55,40 @@ class ArgoCDWebhookExecutorTest {
   private AdvancedHttpRequestWithBody request;
 
   @Mock
-  private ArgoCDWebhookPayloader payloader;
+  private ArgoCDWebhookPayloadGenerator payloader;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private PostReceiveRepositoryHookEvent event;
 
   @Mock
   private Content content;
-  private final GitHubPushEventPayloadDto payload = new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "master"));
+  private final GitHubPushEventPayloadDto payload = new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "main"));
 
   private final Repository repository = RepositoryTestData.create42Puzzle();
 
   @BeforeEach
   void initClient() {
     when(client.post(any())).thenReturn(request);
-    when(payloader.createPayload(repository)).thenReturn(payload);
+    when(payloader.createPayload(repository, "main")).thenReturn(payload);
     lenient().when(request.getContent()).thenReturn(content);
   }
 
   @Test
-  void shouldTriggerWebhookWithoutSecret() {
+  void shouldTriggerWebhookWithoutSecretWithModifiedBranches() {
+    when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
+    ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", ""));
+
+    executor.run();
+
+    verify(request).header("X-Github-Event", "push");
+    verify(request).spanKind("Webhook");
+    verify(request).contentType(MediaType.APPLICATION_JSON);
+    verify(request).jsonContent(payload);
+  }
+
+  @Test
+  void shouldTriggerWebhookWithoutSecretWithDeletedBranches() {
+    when(event.getContext().getBranchProvider().getDeletedOrClosed()).thenReturn(singletonList("main"));
     ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", ""));
 
     executor.run();
@@ -84,6 +101,7 @@ class ArgoCDWebhookExecutorTest {
 
   @Test
   void shouldTriggerWebhookWithSecret() {
+    when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
     ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", "456"));
 
     executor.run();
@@ -96,6 +114,6 @@ class ArgoCDWebhookExecutorTest {
   }
 
   private ArgoCDWebhookExecutor createExecutor(ArgoCDWebhook webhook) {
-    return new ArgoCDWebhookExecutor(client, payloader, webhook, repository);
+    return new ArgoCDWebhookExecutor(client, payloader, webhook, repository, event);
   }
 }

@@ -29,27 +29,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import sonia.scm.repository.Branch;
-import sonia.scm.repository.Branches;
-import sonia.scm.repository.InternalRepositoryException;
-import sonia.scm.repository.Person;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
-import sonia.scm.repository.api.BranchesCommandBuilder;
-import sonia.scm.repository.api.Command;
 import sonia.scm.repository.api.RepositoryService;
 import sonia.scm.repository.api.RepositoryServiceFactory;
 import sonia.scm.repository.api.ScmProtocol;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Collections.list;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,25 +51,15 @@ class ArgoCDWebhookPayloaderTest {
 
   @Mock
   private RepositoryService service;
-  @Mock
-  private BranchesCommandBuilder branchesCommandBuilder;
-  @Mock
-  private Stream<ScmProtocol> protocolStream;
-
 
   @InjectMocks
-  private ArgoCDWebhookPayloader payloader;
-
+  private ArgoCDWebhookPayloadGenerator payloader;
 
 
   @Test
-  void shouldCreatePayload() throws IOException {
+  void shouldCreatePayload() {
     when(serviceFactory.create(repository)).thenReturn(service);
-    when(service.isSupported(Command.BRANCHES)).thenReturn(true);
-    when(service.getSupportedProtocols()).thenReturn(protocolStream);
-    when(service.getBranchesCommand()).thenReturn(branchesCommandBuilder);
-    when(branchesCommandBuilder.getBranches()).thenReturn(new Branches(List.of(Branch.defaultBranch("main", "123", 0L, Person.toPerson("")))));
-    when(protocolStream.collect(any())).thenReturn(List.of(new ScmProtocol() {
+    when(service.getSupportedProtocols()).thenReturn(Stream.of(new ScmProtocol() {
       @Override
       public String getType() {
         return "http";
@@ -92,7 +71,7 @@ class ArgoCDWebhookPayloaderTest {
       }
     }));
 
-    GitHubPushEventPayloadDto payload = payloader.createPayload(repository);
+    GitHubPushEventPayloadDto payload = payloader.createPayload(repository, "main");
 
     assertThat(payload.getRef()).isEqualTo("refs/heads/main");
     assertThat(payload.getCommits()).isEmpty();
@@ -101,21 +80,9 @@ class ArgoCDWebhookPayloaderTest {
   }
 
   @Test
-  void shouldFailForUnsupportedRepoType() {
+  void shouldCreatePayloadWithOtherBranch() {
     when(serviceFactory.create(repository)).thenReturn(service);
-    when(service.isSupported(Command.BRANCHES)).thenReturn(false);
-
-    assertThrows(InternalRepositoryException.class, () -> payloader.createPayload(repository));
-  }
-
-  @Test
-  void shouldFailForMissingDefaultBranch() throws IOException {
-    when(serviceFactory.create(repository)).thenReturn(service);
-    when(service.isSupported(Command.BRANCHES)).thenReturn(true);
-    when(service.getSupportedProtocols()).thenReturn(protocolStream);
-    when(service.getBranchesCommand()).thenReturn(branchesCommandBuilder);
-    when(branchesCommandBuilder.getBranches()).thenReturn(new Branches(List.of(Branch.normalBranch("main", "123", 0L, Person.toPerson("")))));
-    when(protocolStream.collect(any())).thenReturn(List.of(new ScmProtocol() {
+    when(service.getSupportedProtocols()).thenReturn(Stream.of(new ScmProtocol() {
       @Override
       public String getType() {
         return "http";
@@ -127,6 +94,29 @@ class ArgoCDWebhookPayloaderTest {
       }
     }));
 
-    assertThrows(InternalRepositoryException.class, () -> payloader.createPayload(repository));
+    GitHubPushEventPayloadDto payload = payloader.createPayload(repository, "feature/test");
+
+    assertThat(payload.getRef()).isEqualTo("refs/heads/feature/test");
+    assertThat(payload.getCommits()).isEmpty();
+    assertThat(payload.getRepository().getDefaultBranch()).isEqualTo("feature/test");
+    assertThat(payload.getRepository().getHtmlUrl()).isEqualTo("my-repo-url");
+  }
+
+  @Test
+  void shouldFailForMissingHttpProtocol() {
+    when(serviceFactory.create(repository)).thenReturn(service);
+    when(service.getSupportedProtocols()).thenReturn(Stream.of(new ScmProtocol() {
+      @Override
+      public String getType() {
+        return "ssh";
+      }
+
+      @Override
+      public String getUrl() {
+        return "my-repo-url";
+      }
+    }));
+
+    assertThrows(ArgoCDHookExecutionException.class, () -> payloader.createPayload(repository, "master"));
   }
 }

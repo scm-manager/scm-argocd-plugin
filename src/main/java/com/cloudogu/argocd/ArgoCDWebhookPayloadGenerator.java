@@ -24,41 +24,27 @@
 
 package com.cloudogu.argocd;
 
-import sonia.scm.ContextEntry;
-import sonia.scm.repository.Branch;
-import sonia.scm.repository.InternalRepositoryException;
 import sonia.scm.repository.Repository;
-import sonia.scm.repository.api.Command;
 import sonia.scm.repository.api.RepositoryService;
 import sonia.scm.repository.api.RepositoryServiceFactory;
-import sonia.scm.repository.api.ScmProtocol;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.util.stream.Collectors;
 
-public class ArgoCDWebhookPayloader {
+public class ArgoCDWebhookPayloadGenerator {
 
   private final RepositoryServiceFactory serviceFactory;
 
   @Inject
-  public ArgoCDWebhookPayloader(RepositoryServiceFactory serviceFactory) {
+  public ArgoCDWebhookPayloadGenerator(RepositoryServiceFactory serviceFactory) {
     this.serviceFactory = serviceFactory;
   }
 
-  public GitHubPushEventPayloadDto createPayload(Repository repository) {
+  public GitHubPushEventPayloadDto createPayload(Repository repository, String branch) {
     try (RepositoryService service = serviceFactory.create(repository)) {
-      if (!service.isSupported(Command.BRANCHES)) {
-        throw new InternalRepositoryException(repository, "Repository does not support this type of webhook");
-      }
-      ScmProtocol scmProtocol = service.getSupportedProtocols().collect(Collectors.toList()).get(0);
-      String defaultBranch = service.getBranchesCommand().getBranches().getBranches().stream()
-        .filter(Branch::isDefaultBranch)
-        .findFirst().map(Branch::getName)
-        .orElseThrow(() -> new InternalRepositoryException(repository, "Could not find default branch"));
-      return new GitHubPushEventPayloadDto(new GitHubRepository(scmProtocol.getUrl(), defaultBranch));
-    } catch (IOException e) {
-      throw new ArgoCDHookExecutionException(ContextEntry.ContextBuilder.entity(repository).build(), "Failed to create webhook payload", e);
+      return service.getSupportedProtocols()
+        .filter(p -> p.getType().equals("http"))
+        .map(protocol -> new GitHubPushEventPayloadDto(new GitHubRepository(protocol.getUrl(), branch)))
+        .findFirst().orElseThrow(() -> new ArgoCDHookExecutionException("Http protocol not found"));
     }
   }
 }

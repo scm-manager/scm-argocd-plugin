@@ -38,10 +38,10 @@ import javax.inject.Provider;
 public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWebhook> {
 
   private final Provider<AdvancedHttpClient> clientProvider;
-  private final ArgoCDWebhookPayloader payloader;
+  private final ArgoCDWebhookPayloadGenerator payloader;
 
   @Inject
-  public ArgoCDWebhookSpecification(Provider<AdvancedHttpClient> clientProvider, ArgoCDWebhookPayloader payloader) {
+  public ArgoCDWebhookSpecification(Provider<AdvancedHttpClient> clientProvider, ArgoCDWebhookPayloadGenerator payloader) {
     this.clientProvider = clientProvider;
     this.payloader = payloader;
   }
@@ -58,6 +58,6 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
 
   @Override
   public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, PostReceiveRepositoryHookEvent event) {
-    return new ArgoCDWebhookExecutor(clientProvider.get(), payloader, webHook, repository);
+    return new ArgoCDWebhookExecutor(clientProvider.get(), payloader, webHook, repository, event);
   }
 }

@@ -24,19 +24,13 @@
 
 package com.cloudogu.argocd;
 
-import sonia.scm.ContextEntry;
-import sonia.scm.ExceptionWithContext;
+public class ArgoCDHookExecutionException extends RuntimeException {
 
-import java.util.List;
-
-public class ArgoCDHookExecutionException extends ExceptionWithContext {
-
-  protected ArgoCDHookExecutionException(List<ContextEntry> context, String message, Exception cause) {
-    super(context, message, cause);
+  protected ArgoCDHookExecutionException(String message, Exception cause) {
+    super(message, cause);
   }
 
-  @Override
-  public String getCode() {
-    return "2ATMbdEev1";
+  protected ArgoCDHookExecutionException(String message) {
+    super(message);
   }
 }
