@@ -42,9 +42,9 @@ public class ArgoCDWebhookPayloadGenerator {
   public GitHubPushEventPayloadDto createPayload(Repository repository, String branch) {
     try (RepositoryService service = serviceFactory.create(repository)) {
       return service.getSupportedProtocols()
-        .filter(p -> p.getType().equals("http"))
+        .filter(p -> "http".equals(p.getType()))
         .map(protocol -> new GitHubPushEventPayloadDto(new GitHubRepository(protocol.getUrl(), branch)))
-        .findFirst().orElseThrow(() -> new ArgoCDHookExecutionException("Http protocol not found"));
+        .findFirst().orElseThrow(() -> new ArgoCDHookExecutionException("Http protocol not found for repository " + repository));
     }
   }
 }
