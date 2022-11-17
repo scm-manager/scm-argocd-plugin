@@ -40,10 +40,7 @@ import java.util.List;
  * We do not send information like the changed files or revisions on purpose.
  * ArgoCD assumes if nothing has been sent that it must refresh all related cluster resources for that repository which is exactly what we want.
  */
-@XmlRootElement
-@NoArgsConstructor
 @Getter
-@Setter
 public class GitHubPushEventPayloadDto {
   private GitHubRepository repository;
   private List<String> commits;
@@ -57,9 +54,7 @@ public class GitHubPushEventPayloadDto {
 }
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
-@Setter
 class GitHubRepository {
   @XmlElement(name = "html_url")
   private String htmlUrl;

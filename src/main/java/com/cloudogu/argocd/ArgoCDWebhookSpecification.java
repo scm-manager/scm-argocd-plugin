@@ -24,6 +24,7 @@
 
 package com.cloudogu.argocd;
 
+import org.apache.commons.lang.StringUtils;
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.plugin.Extension;
 import sonia.scm.repository.PostReceiveRepositoryHookEvent;
@@ -37,6 +38,7 @@ import javax.inject.Provider;
 @Extension
 public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWebhook> {
 
+  public static final String DUMMY_SECRET = "__DUMMY__";
   private final Provider<AdvancedHttpClient> clientProvider;
   private final ArgoCDWebhookPayloadGenerator payloader;
 
@@ -59,5 +61,21 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
   @Override
   public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, PostReceiveRepositoryHookEvent event) {
     return new ArgoCDWebhookExecutor(clientProvider.get(), payloader, webHook, repository, event);
+  }
+
+  @Override
+  public ArgoCDWebhook mapToDto(ArgoCDWebhook configuration) {
+    if (StringUtils.isEmpty(configuration.getSecret())) {
+      return configuration;
+    } else {
+      return new ArgoCDWebhook(configuration.getUrl(), DUMMY_SECRET);
+    }
+  }
+
+  @Override
+  public void updateBeforeStore(ArgoCDWebhook oldConfiguration, ArgoCDWebhook newConfiguration) {
+    if (DUMMY_SECRET.equals(newConfiguration.getSecret())) {
+      newConfiguration.setSecret(oldConfiguration.getSecret());
+    }
   }
 }

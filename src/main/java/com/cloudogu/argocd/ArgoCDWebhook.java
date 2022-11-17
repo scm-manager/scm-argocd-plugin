@@ -26,16 +26,19 @@ package com.cloudogu.argocd;
 
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import sonia.scm.webhook.SingleWebHookConfiguration;
+import sonia.scm.xml.XmlEncryptionAdapter;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -43,9 +46,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 @EqualsAndHashCode
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class ArgoCDWebhook implements SingleWebHookConfiguration {
   private String url;
+  @XmlJavaTypeAdapter(XmlEncryptionAdapter.class)
   private String secret;
 }
