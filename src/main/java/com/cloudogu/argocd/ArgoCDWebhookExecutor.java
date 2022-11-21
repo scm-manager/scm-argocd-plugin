@@ -29,9 +29,14 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
+import sonia.scm.repository.Branch;
+import sonia.scm.repository.InternalRepositoryException;
 import sonia.scm.repository.PostReceiveRepositoryHookEvent;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.api.HookBranchProvider;
+import sonia.scm.repository.api.RepositoryService;
+import sonia.scm.repository.api.RepositoryServiceFactory;
+import sonia.scm.repository.api.ScmProtocol;
 import sonia.scm.webhook.WebHookExecutor;
 
 import javax.ws.rs.core.MediaType;
@@ -41,14 +46,19 @@ import java.io.IOException;
 public class ArgoCDWebhookExecutor implements WebHookExecutor {
 
   private final AdvancedHttpClient client;
-  private final ArgoCDWebhookPayloadGenerator payloader;
+
+  private final RepositoryServiceFactory serviceFactory;
   private final ArgoCDWebhook webhook;
   private final Repository repository;
   private final PostReceiveRepositoryHookEvent event;
 
-  public ArgoCDWebhookExecutor(AdvancedHttpClient client, ArgoCDWebhookPayloadGenerator payloader, ArgoCDWebhook webhook, Repository repository, PostReceiveRepositoryHookEvent event) {
+  public ArgoCDWebhookExecutor(AdvancedHttpClient client,
+                               RepositoryServiceFactory serviceFactory,
+                               ArgoCDWebhook webhook,
+                               Repository repository,
+                               PostReceiveRepositoryHookEvent event) {
     this.client = client;
-    this.payloader = payloader;
+    this.serviceFactory = serviceFactory;
     this.webhook = webhook;
     this.repository = repository;
     this.event = event;
@@ -57,20 +67,25 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
   @Override
   public void run() {
     HookBranchProvider branchProvider = event.getContext().getBranchProvider();
-    branchProvider.getCreatedOrModified().forEach(this::sendEvent);
-    branchProvider.getDeletedOrClosed().forEach(this::sendEvent);
+    try (RepositoryService service = serviceFactory.create(repository)) {
+      String defaultBranch = findDefaultBranch(service);
+      String htmlUrl = findHtmlUrl(service);
+      branchProvider.getCreatedOrModified().forEach(branch -> sendEvent(new GitHubRepository(htmlUrl, defaultBranch), branch));
+      branchProvider.getDeletedOrClosed().forEach(branch -> sendEvent(new GitHubRepository(htmlUrl, defaultBranch), branch));
+  } catch (IOException e) {
+      throw new InternalRepositoryException(repository, "Failed to trigger ArgoCD Webhook", e);
+    }
   }
 
-  private void sendEvent(String branch) {
+  private void sendEvent(GitHubRepository gitHubRepository, String branch) {
     try {
-      GitHubPushEventPayloadDto payload = payloader.createPayload(repository, branch);
       AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
         //TODO Remove after testing
         .disableCertificateValidation(true).disableHostnameValidation(true)
         .header("X-Github-Event", "push")
         .spanKind("Webhook")
         .contentType(MediaType.APPLICATION_JSON)
-        .jsonContent(payload);
+        .jsonContent(new GitHubPushEventPayloadDto(gitHubRepository, branch));
 
       if (!Strings.isNullOrEmpty(webhook.getSecret())) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -89,5 +104,20 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
         e
       );
     }
+  }
+
+  private String findHtmlUrl(RepositoryService service) {
+    return service.getSupportedProtocols()
+      .filter(p -> "http".equals(p.getType()))
+      .findFirst()
+      .map(ScmProtocol::getUrl)
+      .orElseThrow(() -> new ArgoCDHookExecutionException("Http protocol not found for repository " + repository));
+  }
+
+  private String findDefaultBranch(RepositoryService service) throws IOException {
+    return service.getBranchesCommand().getBranches().getBranches().stream()
+      .filter(Branch::isDefaultBranch)
+      .findFirst().map(Branch::getName)
+      .orElseThrow(() -> new InternalRepositoryException(repository, "Could not find default branch"));
   }
 }

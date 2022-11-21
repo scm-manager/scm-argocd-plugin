@@ -25,6 +25,7 @@
 package com.cloudogu.argocd;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -33,14 +34,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.net.ahc.AdvancedHttpRequestWithBody;
 import sonia.scm.net.ahc.Content;
+import sonia.scm.repository.Branch;
+import sonia.scm.repository.Branches;
+import sonia.scm.repository.InternalRepositoryException;
+import sonia.scm.repository.Person;
 import sonia.scm.repository.PostReceiveRepositoryHookEvent;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
+import sonia.scm.repository.api.BranchesCommandBuilder;
+import sonia.scm.repository.api.RepositoryService;
+import sonia.scm.repository.api.RepositoryServiceFactory;
+import sonia.scm.repository.api.ScmProtocol;
 
 import javax.ws.rs.core.MediaType;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Stream;
+
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,70 +66,136 @@ class ArgoCDWebhookExecutorTest {
 
   @Mock
   private AdvancedHttpClient client;
+  @Mock
+  private RepositoryServiceFactory serviceFactory;
+  @Mock
+  private RepositoryService service;
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private BranchesCommandBuilder branchesCommandBuilder;
 
   @Mock(answer = Answers.RETURNS_SELF)
   private AdvancedHttpRequestWithBody request;
-
-  @Mock
-  private ArgoCDWebhookPayloadGenerator payloader;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private PostReceiveRepositoryHookEvent event;
 
   @Mock
   private Content content;
-  private final GitHubPushEventPayloadDto payload = new GitHubPushEventPayloadDto(new GitHubRepository("test.de", "main"));
 
   private final Repository repository = RepositoryTestData.create42Puzzle();
 
   @BeforeEach
   void initClient() {
-    when(client.post(any())).thenReturn(request);
-    when(payloader.createPayload(repository, "main")).thenReturn(payload);
+    lenient().when(client.post(any())).thenReturn(request);
     lenient().when(request.getContent()).thenReturn(content);
+    when(serviceFactory.create(repository)).thenReturn(service);
+    when(service.getBranchesCommand()).thenReturn(branchesCommandBuilder);
   }
 
   @Test
-  void shouldTriggerWebhookWithoutSecretWithModifiedBranches() {
+  void shouldThrowExceptionForMissingHttpProtocol() {
     when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
     ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", ""));
 
-    executor.run();
-
-    verify(request).header("X-Github-Event", "push");
-    verify(request).spanKind("Webhook");
-    verify(request).contentType(MediaType.APPLICATION_JSON);
-    verify(request).jsonContent(payload);
+    assertThrows(ArgoCDHookExecutionException.class, executor::run);
   }
 
   @Test
-  void shouldTriggerWebhookWithoutSecretWithDeletedBranches() {
-    when(event.getContext().getBranchProvider().getDeletedOrClosed()).thenReturn(singletonList("main"));
+  void shouldThrowExceptionForMissingDefaultBranch() throws IOException {
+    when(branchesCommandBuilder.getBranches()).thenReturn(
+      new Branches(List.of(Branch.normalBranch("main", "abc", 0L, Person.toPerson("trillian"))))
+    );
+
+    when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
     ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", ""));
 
-    executor.run();
-
-    verify(request).header("X-Github-Event", "push");
-    verify(request).spanKind("Webhook");
-    verify(request).contentType(MediaType.APPLICATION_JSON);
-    verify(request).jsonContent(payload);
+    assertThrows(InternalRepositoryException.class, executor::run);
   }
 
-  @Test
-  void shouldTriggerWebhookWithSecret() {
-    when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
-    ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", "456"));
+  @Nested
+  class WithHttpUrlAndDefaultBranch {
 
-    executor.run();
+    @BeforeEach
+    void initRepoMocks() throws IOException {
+      when(branchesCommandBuilder.getBranches()).thenReturn(
+        new Branches(List.of(Branch.defaultBranch("main", "abc", 0L, Person.toPerson("trillian"))))
+      );
+      when(service.getSupportedProtocols()).thenReturn(Stream.of(new ScmProtocol() {
+        @Override
+        public String getType() {
+          return "http";
+        }
 
-    verify(request).header("X-Github-Event", "push");
-    verify(request).header("X-Hub-Signature", "sha1=22c2bbe31bd7e8cea1169f6cbbf89f7935a6116a");
-    verify(request).spanKind("Webhook");
-    verify(request).contentType(MediaType.APPLICATION_JSON);
-    verify(request).jsonContent(payload);
+        @Override
+        public String getUrl() {
+          return "https://test.de";
+        }
+      }));
+    }
+
+    @Test
+    void shouldTriggerWebhookWithoutSecretWithModifiedBranches() {
+      when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
+      ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", ""));
+
+      executor.run();
+
+      verify(request).header("X-Github-Event", "push");
+      verify(request).spanKind("Webhook");
+      verify(request).contentType(MediaType.APPLICATION_JSON);
+      verify(request).jsonContent(argThat((GitHubPushEventPayloadDto p) -> {
+        assertThat(p.getCommits()).isEmpty();
+        assertThat(p.getRef()).isEqualTo("refs/heads/main");
+        assertThat(p.getRepository().getHtmlUrl()).isEqualTo("https://test.de");
+        assertThat(p.getRepository().getDefaultBranch()).isEqualTo("main");
+        return true;
+      }));
+    }
+
+    @Test
+    void shouldTriggerWebhookWithoutSecretWithDeletedBranches() {
+      when(event.getContext().getBranchProvider().getDeletedOrClosed()).thenReturn(singletonList("feature"));
+      ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", ""));
+
+      executor.run();
+
+      verify(request).header("X-Github-Event", "push");
+      verify(request).spanKind("Webhook");
+      verify(request).contentType(MediaType.APPLICATION_JSON);
+      verify(request).jsonContent(argThat((GitHubPushEventPayloadDto p) -> {
+        assertThat(p.getCommits()).isEmpty();
+        assertThat(p.getRef()).isEqualTo("refs/heads/feature");
+        assertThat(p.getRepository().getHtmlUrl()).isEqualTo("https://test.de");
+        assertThat(p.getRepository().getDefaultBranch()).isEqualTo("main");
+        return true;
+      }));
+    }
+
+
+    @Test
+    void shouldTriggerWebhookWithSecret() {
+      when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("test"));
+      ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", "456"));
+
+      executor.run();
+
+      verify(request).header("X-Github-Event", "push");
+      verify(request).header("X-Hub-Signature", "sha1=22c2bbe31bd7e8cea1169f6cbbf89f7935a6116a");
+      verify(request).spanKind("Webhook");
+      verify(request).contentType(MediaType.APPLICATION_JSON);
+      verify(request).jsonContent(argThat((GitHubPushEventPayloadDto p) -> {
+        assertThat(p.getCommits()).isEmpty();
+        assertThat(p.getRef()).isEqualTo("refs/heads/test");
+        assertThat(p.getRepository().getHtmlUrl()).isEqualTo("https://test.de");
+        assertThat(p.getRepository().getDefaultBranch()).isEqualTo("main");
+        return true;
+      }));
+    }
   }
+
+
 
   private ArgoCDWebhookExecutor createExecutor(ArgoCDWebhook webhook) {
-    return new ArgoCDWebhookExecutor(client, payloader, webhook, repository, event);
+    return new ArgoCDWebhookExecutor(client, serviceFactory, webhook, repository, event);
   }
 }

@@ -29,6 +29,7 @@ import sonia.scm.net.ahc.AdvancedHttpClient;
 import sonia.scm.plugin.Extension;
 import sonia.scm.repository.PostReceiveRepositoryHookEvent;
 import sonia.scm.repository.Repository;
+import sonia.scm.repository.api.RepositoryServiceFactory;
 import sonia.scm.webhook.WebHookExecutor;
 import sonia.scm.webhook.WebHookSpecification;
 
@@ -40,12 +41,12 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
 
   public static final String DUMMY_SECRET = "__DUMMY__";
   private final Provider<AdvancedHttpClient> clientProvider;
-  private final ArgoCDWebhookPayloadGenerator payloader;
+  private final RepositoryServiceFactory serviceFactory;
 
   @Inject
-  public ArgoCDWebhookSpecification(Provider<AdvancedHttpClient> clientProvider, ArgoCDWebhookPayloadGenerator payloader) {
+  public ArgoCDWebhookSpecification(Provider<AdvancedHttpClient> clientProvider,  RepositoryServiceFactory serviceFactory) {
     this.clientProvider = clientProvider;
-    this.payloader = payloader;
+    this.serviceFactory = serviceFactory;
   }
 
   @Override
@@ -60,7 +61,7 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
 
   @Override
   public WebHookExecutor createExecutor(ArgoCDWebhook webHook, Repository repository, PostReceiveRepositoryHookEvent event) {
-    return new ArgoCDWebhookExecutor(clientProvider.get(), payloader, webHook, repository, event);
+    return new ArgoCDWebhookExecutor(clientProvider.get(), serviceFactory, webHook, repository, event);
   }
 
   @Override

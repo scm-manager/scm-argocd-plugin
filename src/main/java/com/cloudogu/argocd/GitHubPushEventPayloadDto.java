@@ -43,9 +43,9 @@ public class GitHubPushEventPayloadDto {
   private final List<String> commits;
   private final String ref;
 
-  public GitHubPushEventPayloadDto(GitHubRepository repository) {
+  public GitHubPushEventPayloadDto(GitHubRepository repository, String branch) {
     this.repository = repository;
-    this.ref =  "refs/heads/" + repository.getDefaultBranch();
+    this.ref =  "refs/heads/" + branch;
     this.commits = new ArrayList<>();
   }
 }
