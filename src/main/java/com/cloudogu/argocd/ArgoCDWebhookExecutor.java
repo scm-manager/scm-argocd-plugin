@@ -80,8 +80,6 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
   private void sendEvent(GitHubRepository gitHubRepository, String branch) {
     try {
       AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
-        //TODO Remove after testing
-        .disableCertificateValidation(true).disableHostnameValidation(true)
         .header("X-Github-Event", "push")
         .spanKind("Webhook")
         .contentType(MediaType.APPLICATION_JSON)
