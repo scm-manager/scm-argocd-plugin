@@ -3,7 +3,7 @@
     "config": {
       "url": "Endpunkt URL",
       "urlHelpText": "Die vollständige URL des ArgoCD Webhook Endpunktes, z. B.: \"https://mein-argo.cloudogu.net/api/webhook\"",
-      "secret": "Token (Optional)",
+      "secret": "Token",
       "secretHelpText": "Optionales GitHub Secret für ArgoCD Webhooks. Zum Verwenden muss der Token in dem ArgoCD Secret im Cluster als GitHub Secret existieren. \nAnleitung: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/webhook.md",
       "insecure": "Webhook \"unsicher\" versenden",
       "insecureHelpText": "Unsichere Webhooks ignorieren ungültige Zertifikate und die Validierung des Hostnamen",

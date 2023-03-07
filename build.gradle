@@ -23,19 +23,19 @@
  */
 
 plugins {
-  id 'org.scm-manager.smp' version '0.13.0'
+  id 'org.scm-manager.smp' version '0.15.0'
 }
 
 dependencies {
   // define dependencies to other plugins here e.g.:
-   plugin "sonia.scm.plugins:scm-webhook-plugin:2.3.2"
+   plugin "sonia.scm.plugins:scm-webhook-plugin:2.3.4-SNAPSHOT"
   // optionalPlugin "sonia.scm.plugins:scm-editor-plugin:2.0.0"
 
   implementation "commons-codec:commons-codec:1.15"
 }
 
 scmPlugin {
-  scmVersion = "2.19.0"
+  scmVersion = "2.42.3-SNAPSHOT"
   displayName = "Argo CD"
   description = "Integrates Argo CD build pipelines"
 

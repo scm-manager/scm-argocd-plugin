@@ -22,14 +22,17 @@
  * SOFTWARE.
  */
 
-import { binder } from "@scm-manager/ui-extensions";
-import ArgoCDWebhookConfigurationForm from "./ArgoCDWebhookConfigurationForm";
+import { binder} from "@scm-manager/ui-extensions";
+import ArgoCDWebhookConfigurationForm, { ArgoCDWebhook } from "./ArgoCDWebhookConfigurationForm";
+import { WebhookConfiguration } from "@scm-manager/scm-webhook-plugin";
 
-binder.bind("webhook.configuration.ArgoCDWebhook", ArgoCDWebhookConfigurationForm);
-binder.bind("webhook.configurations", {
+binder.bind<WebhookConfiguration<ArgoCDWebhook>>("webhook.configuration", {
   name: "ArgoCDWebhook",
+  FormComponent: ArgoCDWebhookConfigurationForm,
   defaultConfiguration: {
     url: "",
-    secret: ""
+    secret: "",
+    insecure: false
   }
 });
+

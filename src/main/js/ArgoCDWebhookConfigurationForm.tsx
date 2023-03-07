@@ -22,52 +22,43 @@
  * SOFTWARE.
  */
 
-import { Checkbox, InputField, Notification } from "@scm-manager/ui-components";
-import React, { FC, useEffect, useState } from "react";
-import { ArgoCDWebhook } from "./ArgoCDWebhook";
+import React, { FC } from "react";
 import { useTranslation } from "react-i18next";
+import { Form } from "@scm-manager/ui-forms";
+import { Notification } from "@scm-manager/ui-components";
+
+export type ArgoCDWebhook = {
+  url: string;
+  secret: string;
+  insecure: boolean;
+}
 
 type Props = {
-  webHook: { name: string; configuration: ArgoCDWebhook };
-  readOnly: boolean;
-  onChange: (p: ArgoCDWebhook, valid: boolean) => void;
+  webhook: ArgoCDWebhook;
 };
 
-const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webHook, readOnly, onChange }) => {
-  const [webhookState, setWebhookState] = useState<ArgoCDWebhook>(webHook.configuration);
+const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webhook }) => {
   const [t] = useTranslation("plugins");
-
-  useEffect(() => {
-    onChange(webhookState, isConfigValid());
-  }, [webhookState]);
-
-  const isConfigValid = () => !!webhookState.url;
 
   return (
     <>
-      <InputField
+      <Form.Input
+        name="url"
         label={t("scm-argocd-plugin.config.url")}
         helpText={t("scm-argocd-plugin.config.urlHelpText")}
-        value={webhookState.url}
-        onChange={value => setWebhookState({ ...webhookState, url: value })}
-        readOnly={readOnly}
       />
-      <InputField
+      <Form.Input
+        name="secret"
         label={t("scm-argocd-plugin.config.secret")}
         helpText={t("scm-argocd-plugin.config.secretHelpText")}
         type="password"
-        value={webhookState.secret}
-        onChange={value => setWebhookState({ ...webhookState, secret: value })}
-        readOnly={readOnly}
       />
-      <Checkbox
+      <Form.Checkbox
+        name="insecure"
         label={t("scm-argocd-plugin.config.insecure")}
         helpText={t("scm-argocd-plugin.config.insecureHelpText")}
-        checked={webhookState.insecure}
-        onChange={value => setWebhookState({ ...webhookState, insecure: value })}
-        readOnly={readOnly}
       />
-      {webhookState.insecure ? (
+      {webhook.insecure ? (
         <Notification type="warning">{t("scm-argocd-plugin.config.insecureWarning")}</Notification>
       ) : null}
     </>
