@@ -25,10 +25,14 @@
 import { binder} from "@scm-manager/ui-extensions";
 import ArgoCDWebhookConfigurationForm, { ArgoCDWebhook } from "./ArgoCDWebhookConfigurationForm";
 import { WebhookConfiguration } from "@scm-manager/scm-webhook-plugin";
+import ArgoCDOverviewCardTop from "./ArgoCDOverviewCardTop";
+import ArgoCDOverviewCardBottom from "./ArgoCDOverviewCardBottom";
 
 binder.bind<WebhookConfiguration<ArgoCDWebhook>>("webhook.configuration", {
   name: "ArgoCDWebhook",
   FormComponent: ArgoCDWebhookConfigurationForm,
+  OverviewCardTop: ArgoCDOverviewCardTop,
+  OverviewCardBottom: ArgoCDOverviewCardBottom,
   defaultConfiguration: {
     url: "",
     secret: "",

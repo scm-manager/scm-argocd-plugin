@@ -22,29 +22,8 @@
  * SOFTWARE.
  */
 
-plugins {
-  id 'org.scm-manager.smp' version '0.15.0'
-}
+import React, { FC } from "react";
 
-dependencies {
-  // define dependencies to other plugins here e.g.:
-   plugin "sonia.scm.plugins:scm-webhook-plugin:2.3.4-SNAPSHOT"
-  // optionalPlugin "sonia.scm.plugins:scm-editor-plugin:2.0.0"
+const SecondaryInformation: FC = ({ children }) => <small className="has-text-grey px-2">{children}</small>;
 
-  implementation "commons-codec:commons-codec:1.15"
-}
-
-scmPlugin {
-  scmVersion = "2.43.1-SNAPSHOT"
-  displayName = "Argo CD"
-  description = "Integrates Argo CD build pipelines"
-
-   author = "Cloudogu GmbH"
-   category = "Continuous Integration"
-
-  openapi {
-    packages = [
-      "com.cloudogu.argocd"
-    ]
-  }
-}
+export default SecondaryInformation;

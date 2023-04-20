@@ -1,14 +1,16 @@
 {
   "scm-argocd-plugin": {
     "config": {
-      "url": "Webhook URL",
+      "httpMethod": "HTTP Method",
+      "url": "URL",
       "urlHelpText": "The complete ArgoCD webhook endpoint url, e.g.: \"https://my-argo.cloudogu.net/api/webhook\"",
       "secret": "Secret",
       "secretHelpText": "Optional GitHub Secret for ArgoCD webhooks. The same secret must be configured as GitHub secret inside the ArgoCD secret in your cluster. \nGuide: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/webhook.md",
       "insecure": "Send webhook \"insecure\"",
       "insecureHelpText": "Insecure webhooks will ignore hostname validation and invalid certificates",
       "insecureWarning": "This webhook is set to \"insecure\". This mode should only be used for testing purpose and never be activated in production."
-    }
+    },
+    "overviewMethod": "Method"
   },
   "webhooks": {
     "ArgoCDWebhook": {

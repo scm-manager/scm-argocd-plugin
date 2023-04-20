@@ -26,12 +26,13 @@ import React, { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Form } from "@scm-manager/ui-forms";
 import { Notification } from "@scm-manager/ui-components";
+import { SelectField } from "@scm-manager/ui-forms";
 
 export type ArgoCDWebhook = {
   url: string;
   secret: string;
   insecure: boolean;
-}
+};
 
 type Props = {
   webhook: ArgoCDWebhook;
@@ -42,22 +43,37 @@ const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webhook }) => {
 
   return (
     <>
-      <Form.Input
-        name="url"
-        label={t("scm-argocd-plugin.config.url")}
-        helpText={t("scm-argocd-plugin.config.urlHelpText")}
-      />
-      <Form.Input
-        name="secret"
-        label={t("scm-argocd-plugin.config.secret")}
-        helpText={t("scm-argocd-plugin.config.secretHelpText")}
-        type="password"
-      />
-      <Form.Checkbox
-        name="insecure"
-        label={t("scm-argocd-plugin.config.insecure")}
-        helpText={t("scm-argocd-plugin.config.insecureHelpText")}
-      />
+      <Form.Row>
+        <SelectField
+          className="column"
+          label={t("scm-argocd-plugin.config.httpMethod")}
+          defaultValue="POST"
+          options={[{ label: "POST", value: "POST" }]}
+          disabled
+        />
+      </Form.Row>
+      <Form.Row>
+        <Form.Input
+          name="url"
+          label={t("scm-argocd-plugin.config.url")}
+          helpText={t("scm-argocd-plugin.config.urlHelpText")}
+        />
+      </Form.Row>
+      <Form.Row>
+        <Form.Input
+          name="secret"
+          label={t("scm-argocd-plugin.config.secret")}
+          helpText={t("scm-argocd-plugin.config.secretHelpText")}
+          type="password"
+        />
+      </Form.Row>
+      <Form.Row>
+        <Form.Checkbox
+          name="insecure"
+          label={t("scm-argocd-plugin.config.insecure")}
+          helpText={t("scm-argocd-plugin.config.insecureHelpText")}
+        />
+      </Form.Row>
       {webhook.insecure ? (
         <Notification type="warning">{t("scm-argocd-plugin.config.insecureWarning")}</Notification>
       ) : null}

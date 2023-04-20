@@ -22,29 +22,19 @@
  * SOFTWARE.
  */
 
-plugins {
-  id 'org.scm-manager.smp' version '0.15.0'
-}
+import React, { FC } from "react";
+import { useTranslation } from "react-i18next";
+import PrimaryInformation from "./PrimaryInformation";
+import { ArgoCDWebhook } from "./ArgoCDWebhookConfigurationForm";
 
-dependencies {
-  // define dependencies to other plugins here e.g.:
-   plugin "sonia.scm.plugins:scm-webhook-plugin:2.3.4-SNAPSHOT"
-  // optionalPlugin "sonia.scm.plugins:scm-editor-plugin:2.0.0"
+const ArgoCDOverviewCardBottom: FC<{ webhook: ArgoCDWebhook }> = ({ webhook }) => {
+  const [t] = useTranslation("plugins");
 
-  implementation "commons-codec:commons-codec:1.15"
-}
+  return (
+    <>
+      <PrimaryInformation>{t("scm-argocd-plugin.config.url")}:</PrimaryInformation> {webhook.url}
+    </>
+  );
+};
 
-scmPlugin {
-  scmVersion = "2.43.1-SNAPSHOT"
-  displayName = "Argo CD"
-  description = "Integrates Argo CD build pipelines"
-
-   author = "Cloudogu GmbH"
-   category = "Continuous Integration"
-
-  openapi {
-    packages = [
-      "com.cloudogu.argocd"
-    ]
-  }
-}
+export default ArgoCDOverviewCardBottom;
