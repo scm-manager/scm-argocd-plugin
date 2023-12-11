@@ -70,20 +70,20 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
     try (RepositoryService service = serviceFactory.create(repository)) {
       String defaultBranch = findDefaultBranch(service);
       String htmlUrl = findHtmlUrl(service);
-      branchProvider.getCreatedOrModified().forEach(branch -> sendEvent(new GitHubRepository(htmlUrl, defaultBranch), branch));
-      branchProvider.getDeletedOrClosed().forEach(branch -> sendEvent(new GitHubRepository(htmlUrl, defaultBranch), branch));
+      branchProvider.getCreatedOrModified().forEach(branch -> sendEvent(new ScmPushEventPayload(htmlUrl, defaultBranch.equals(branch), branch)));
+      branchProvider.getDeletedOrClosed().forEach(branch -> sendEvent(new ScmPushEventPayload(htmlUrl, defaultBranch.equals(branch), branch)));
   } catch (IOException e) {
       throw new InternalRepositoryException(repository, "Failed to trigger ArgoCD Webhook", e);
     }
   }
 
-  private void sendEvent(GitHubRepository gitHubRepository, String branch) {
+  private void sendEvent(ScmPushEventPayload payload) {
     try {
       AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
-        .header("X-Github-Event", "push")
+        .header("X-SCM-PushEvent", "Push")
         .spanKind("Webhook")
         .contentType(MediaType.APPLICATION_JSON)
-        .jsonContent(new GitHubPushEventPayloadDto(gitHubRepository, branch));
+        .jsonContent(payload);
 
       if (webhook.isInsecure()) {
         // We introduced this flag for testing environments
@@ -96,7 +96,7 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
           request.getContent().process(baos);
           String digest = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, webhook.getSecret()).hmacHex(baos.toByteArray());
-          request.header("X-Hub-Signature", "sha1=" + digest);
+          request.header("X-SCM-Signature", "sha1=" + digest);
         }
       }
 

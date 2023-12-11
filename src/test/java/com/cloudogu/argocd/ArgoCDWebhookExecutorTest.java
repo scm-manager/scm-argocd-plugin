@@ -138,53 +138,47 @@ class ArgoCDWebhookExecutorTest {
 
       executor.run();
 
-      verify(request).header("X-Github-Event", "push");
+      verify(request).header("X-SCM-PushEvent", "Push");
       verify(request).spanKind("Webhook");
       verify(request).contentType(MediaType.APPLICATION_JSON);
-      verify(request).jsonContent(argThat((GitHubPushEventPayloadDto p) -> {
-        assertThat(p.getCommits()).isEmpty();
-        assertThat(p.getRef()).isEqualTo("refs/heads/main");
-        assertThat(p.getRepository().getHtmlUrl()).isEqualTo("https://test.de");
-        assertThat(p.getRepository().getDefaultBranch()).isEqualTo("main");
+      verify(request).jsonContent(argThat((ScmPushEventPayload p) -> {
+        assertThat(p.getHtmlUrl()).isEqualTo("https://test.de");
+        assertThat(p.getBranch().isDefaultBranch()).isEqualTo(true);
         return true;
       }));
     }
 
     @Test
-    void shouldTriggerWebhookWithoutSecretWithDeletedBranches() {
+    void shouldNotTriggerWebhookWithoutSecretWithDeletedBranches() {
       when(event.getContext().getBranchProvider().getDeletedOrClosed()).thenReturn(singletonList("feature"));
       ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", "", false));
 
       executor.run();
 
-      verify(request).header("X-Github-Event", "push");
+      verify(request).header("X-SCM-PushEvent", "Push");
       verify(request).spanKind("Webhook");
       verify(request).contentType(MediaType.APPLICATION_JSON);
-      verify(request).jsonContent(argThat((GitHubPushEventPayloadDto p) -> {
-        assertThat(p.getCommits()).isEmpty();
-        assertThat(p.getRef()).isEqualTo("refs/heads/feature");
-        assertThat(p.getRepository().getHtmlUrl()).isEqualTo("https://test.de");
-        assertThat(p.getRepository().getDefaultBranch()).isEqualTo("main");
+      verify(request).jsonContent(argThat((ScmPushEventPayload p) -> {
+        assertThat(p.getHtmlUrl()).isEqualTo("https://test.de");
+        assertThat(p.getBranch().isDefaultBranch()).isEqualTo(false);
         return true;
       }));
     }
 
     @Test
     void shouldTriggerWebhookWithSecret() {
-      when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("test"));
+      when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
       ArgoCDWebhookExecutor executor = createExecutor(new ArgoCDWebhook("https://argo-test.com/webhook", "456", false));
 
       executor.run();
 
-      verify(request).header("X-Github-Event", "push");
-      verify(request).header("X-Hub-Signature", "sha1=22c2bbe31bd7e8cea1169f6cbbf89f7935a6116a");
+      verify(request).header("X-SCM-PushEvent", "Push");
+      verify(request).header("X-SCM-Signature", "sha1=22c2bbe31bd7e8cea1169f6cbbf89f7935a6116a");
       verify(request).spanKind("Webhook");
       verify(request).contentType(MediaType.APPLICATION_JSON);
-      verify(request).jsonContent(argThat((GitHubPushEventPayloadDto p) -> {
-        assertThat(p.getCommits()).isEmpty();
-        assertThat(p.getRef()).isEqualTo("refs/heads/test");
-        assertThat(p.getRepository().getHtmlUrl()).isEqualTo("https://test.de");
-        assertThat(p.getRepository().getDefaultBranch()).isEqualTo("main");
+      verify(request).jsonContent(argThat((ScmPushEventPayload p) -> {
+        assertThat(p.getHtmlUrl()).isEqualTo("https://test.de");
+        assertThat(p.getBranch().isDefaultBranch()).isEqualTo(true);
         return true;
       }));
     }

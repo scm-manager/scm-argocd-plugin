@@ -26,10 +26,10 @@ package com.cloudogu.argocd;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import sonia.scm.repository.Branch;
 
 import javax.xml.bind.annotation.XmlElement;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /*
@@ -38,24 +38,25 @@ import java.util.List;
  * ArgoCD assumes if nothing has been sent that it must refresh all related cluster resources for that repository which is exactly what we want.
  */
 @Getter
-public class GitHubPushEventPayloadDto {
-  private final GitHubRepository repository;
-  private final List<String> commits;
-  private final String ref;
-
-  public GitHubPushEventPayloadDto(GitHubRepository repository, String branch) {
-    this.repository = repository;
-    this.ref =  "refs/heads/" + branch;
-    this.commits = new ArrayList<>();
-  }
-}
-
-@AllArgsConstructor
-@Getter
-class GitHubRepository {
+public class ScmPushEventPayload {
   @XmlElement(name = "html_url")
   private String htmlUrl;
-  @XmlElement(name = "default_branch")
-  private String defaultBranch;
+  @XmlElement(name = "branch")
+  private WebhookBranch branch;
+
+  public ScmPushEventPayload(String htmlUrl, boolean defaultBranch, String branchName) {
+    this.htmlUrl = htmlUrl;
+    this.branch = new WebhookBranch(defaultBranch, branchName);
+  }
+
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Getter
+  public class WebhookBranch{
+    @XmlElement(name = "default_branch")
+    private boolean defaultBranch;
+    @XmlElement(name = "name")
+    private String name;
+  }
 }
 

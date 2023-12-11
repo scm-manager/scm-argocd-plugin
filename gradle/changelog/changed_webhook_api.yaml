@@ -1,0 +1,2 @@
+- type: changed
+  description: ArgoCD Webhook payload adjusted to SCM-Manager specific webhook endpoint
