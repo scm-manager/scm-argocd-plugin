@@ -22,19 +22,27 @@
  * SOFTWARE.
  */
 
-import React, { FC } from "react";
-import { useTranslation } from "react-i18next";
-import SecondaryInformation from "./SecondaryInformation";
-import { ArgoCDWebhook } from "./ArgoCDWebhookConfigurationForm";
+package com.cloudogu.argocd;
 
-const ArgoCDOverviewCardTop: FC<{ webhook: ArgoCDWebhook }> = ({ webhook }) => {
-  const [t] = useTranslation("plugins");
+import sonia.scm.net.ahc.BaseHttpRequest;
 
-  return (
-    <>
-      <SecondaryInformation>{t("scm-argocd-plugin.config.hookImplementation")}: {t(`scm-argocd-plugin.config.hookImplementationTypes.${webhook.hookImplementation}`)}</SecondaryInformation>
-    </>
-  );
-};
+enum HookImplementation {
+  SCMM,
+  GITHUB;
 
-export default ArgoCDOverviewCardTop;
+  void setHeader(BaseHttpRequest<?> request) {
+    if (this == SCMM) {
+      request.header("X-SCM-PushEvent", "Push");
+    } else {
+      request.header("X-Github-Event", "push");
+    }
+  }
+
+  public void setSecurityHeader(BaseHttpRequest<?> request, String digest) {
+    if (this == SCMM) {
+      request.header("X-SCM-Signature", "sha1=" + digest);
+    } else {
+      request.header("X-Hub-Signature", "sha1=" + digest);
+    }
+  }
+}

@@ -22,19 +22,40 @@
  * SOFTWARE.
  */
 
-import React, { FC } from "react";
-import { useTranslation } from "react-i18next";
-import SecondaryInformation from "./SecondaryInformation";
-import { ArgoCDWebhook } from "./ArgoCDWebhookConfigurationForm";
+package com.cloudogu.argocd;
 
-const ArgoCDOverviewCardTop: FC<{ webhook: ArgoCDWebhook }> = ({ webhook }) => {
-  const [t] = useTranslation("plugins");
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-  return (
-    <>
-      <SecondaryInformation>{t("scm-argocd-plugin.config.hookImplementation")}: {t(`scm-argocd-plugin.config.hookImplementationTypes.${webhook.hookImplementation}`)}</SecondaryInformation>
-    </>
-  );
-};
+import javax.xml.bind.annotation.XmlElement;
+import java.util.ArrayList;
+import java.util.List;
 
-export default ArgoCDOverviewCardTop;
+
+/*
+ * We use the GitHub Push Event instead of implementing our own webhook event definition into ArgoCD.
+ * We do not send information like the changed files or revisions on purpose.
+ * ArgoCD assumes if nothing has been sent that it must refresh all related cluster resources for that repository which is exactly what we want.
+ */
+@Getter
+public class GitHubPushEventPayloadDto implements PushEventPayload {
+  private final GitHubRepository repository;
+  private final List<String> commits;
+  private final String ref;
+
+  public GitHubPushEventPayloadDto(GitHubRepository repository, String branch) {
+    this.repository = repository;
+    this.ref =  "refs/heads/" + branch;
+    this.commits = new ArrayList<>();
+  }
+}
+
+@AllArgsConstructor
+@Getter
+class GitHubRepository {
+  @XmlElement(name = "html_url")
+  private String htmlUrl;
+  @XmlElement(name = "default_branch")
+  private String defaultBranch;
+}
+

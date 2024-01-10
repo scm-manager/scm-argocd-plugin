@@ -22,19 +22,7 @@
  * SOFTWARE.
  */
 
-import React, { FC } from "react";
-import { useTranslation } from "react-i18next";
-import SecondaryInformation from "./SecondaryInformation";
-import { ArgoCDWebhook } from "./ArgoCDWebhookConfigurationForm";
+package com.cloudogu.argocd;
 
-const ArgoCDOverviewCardTop: FC<{ webhook: ArgoCDWebhook }> = ({ webhook }) => {
-  const [t] = useTranslation("plugins");
-
-  return (
-    <>
-      <SecondaryInformation>{t("scm-argocd-plugin.config.hookImplementation")}: {t(`scm-argocd-plugin.config.hookImplementationTypes.${webhook.hookImplementation}`)}</SecondaryInformation>
-    </>
-  );
-};
-
-export default ArgoCDOverviewCardTop;
+interface PushEventPayload {
+}

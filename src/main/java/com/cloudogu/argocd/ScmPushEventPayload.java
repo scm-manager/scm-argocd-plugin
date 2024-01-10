@@ -38,7 +38,7 @@ import javax.xml.bind.annotation.XmlElement;
  * ArgoCD assumes if nothing has been sent that it must refresh all related cluster resources for that repository which is exactly what we want.
  */
 @Getter
-public class ScmPushEventPayload {
+public class ScmPushEventPayload implements PushEventPayload {
   @XmlElement(name = "html_url")
   private String htmlUrl;
   @XmlElement(name = "branch")

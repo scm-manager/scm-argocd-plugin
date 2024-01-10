@@ -50,6 +50,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @AllArgsConstructor
 @Data
 public class ArgoCDWebhook implements SingleWebHookConfiguration {
+  private HookImplementation hookImplementation = HookImplementation.GITHUB;
   private String url;
   @XmlJavaTypeAdapter(XmlEncryptionAdapter.class)
   private String secret;

@@ -24,11 +24,11 @@
 
 import React, { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Form } from "@scm-manager/ui-forms";
+import { Form, SelectField } from "@scm-manager/ui-forms";
 import { Notification } from "@scm-manager/ui-components";
-import { SelectField } from "@scm-manager/ui-forms";
 
 export type ArgoCDWebhook = {
+  hookImplementation: string;
   url: string;
   secret: string;
   insecure: boolean;
@@ -43,6 +43,17 @@ const ArgoCDWebhookConfigurationForm: FC<Props> = ({ webhook }) => {
 
   return (
     <>
+      <Form.Row>
+        <Form.Select
+          className="column"
+          name="hookImplementation"
+          // value={webhook.hookImplementation}
+          label={t("scm-argocd-plugin.config.hookImplementation")}
+          helpText={t("scm-argocd-plugin.config.hookImplementationHelpText")}
+          defaultValue="SCMM"
+          options={[{ label: t("scm-argocd-plugin.config.hookImplementationTypes.SCMM"), value: "SCMM" }, { label: t("scm-argocd-plugin.config.hookImplementationTypes.GITHUB"), value: "GITHUB" }]}
+        />
+      </Form.Row>
       <Form.Row>
         <SelectField
           className="column"

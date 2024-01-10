@@ -69,7 +69,7 @@ public class ArgoCDWebhookSpecification implements WebHookSpecification<ArgoCDWe
     if (StringUtils.isEmpty(configuration.getSecret())) {
       return configuration;
     } else {
-      return new ArgoCDWebhook(configuration.getUrl(), DUMMY_SECRET, configuration.isInsecure());
+      return new ArgoCDWebhook(configuration.getHookImplementation(), configuration.getUrl(), DUMMY_SECRET, configuration.isInsecure());
     }
   }
 

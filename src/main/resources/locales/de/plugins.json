@@ -1,6 +1,8 @@
 {
   "scm-argocd-plugin": {
     "config": {
+      "hookImplementation": "Webhook Implementierung",
+      "hookImplementationHelpText": "Die Implementierung, die für den Webhook verwendet werden soll. Es kann entweder die native SCM-Manager Unterstützung von Argo-CD oder aber die GitHub API genutzt werden. Argo-CD muss dementsprecend konfiguriert sein.",
       "httpMethod": "HTTP Methode",
       "url": "URL",
       "urlHelpText": "Die vollständige URL des ArgoCD Webhook Endpunktes, z. B.: \"https://mein-argo.cloudogu.net/api/webhook\"",

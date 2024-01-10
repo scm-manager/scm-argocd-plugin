@@ -70,17 +70,26 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
     try (RepositoryService service = serviceFactory.create(repository)) {
       String defaultBranch = findDefaultBranch(service);
       String htmlUrl = findHtmlUrl(service);
-      branchProvider.getCreatedOrModified().forEach(branch -> sendEvent(new ScmPushEventPayload(htmlUrl, defaultBranch.equals(branch), branch)));
-      branchProvider.getDeletedOrClosed().forEach(branch -> sendEvent(new ScmPushEventPayload(htmlUrl, defaultBranch.equals(branch), branch)));
+      switch (webhook.getHookImplementation()) {
+        case SCMM:
+          branchProvider.getCreatedOrModified().forEach(branch -> sendEvent(new ScmPushEventPayload(htmlUrl, defaultBranch.equals(branch), branch)));
+          branchProvider.getDeletedOrClosed().forEach(branch -> sendEvent(new ScmPushEventPayload(htmlUrl, defaultBranch.equals(branch), branch)));
+          break;
+        case GITHUB:
+          branchProvider.getCreatedOrModified().forEach(branch -> sendEvent(new GitHubPushEventPayloadDto(new GitHubRepository(htmlUrl, defaultBranch), branch)));
+          branchProvider.getDeletedOrClosed().forEach(branch -> sendEvent(new GitHubPushEventPayloadDto(new GitHubRepository(htmlUrl, defaultBranch), branch)));
+          break;
+      }
   } catch (IOException e) {
       throw new InternalRepositoryException(repository, "Failed to trigger ArgoCD Webhook", e);
     }
   }
 
-  private void sendEvent(ScmPushEventPayload payload) {
+  private void sendEvent(PushEventPayload payload) {
     try {
-      AdvancedHttpRequestWithBody request = client.post(webhook.getUrl())
-        .header("X-SCM-PushEvent", "Push")
+      AdvancedHttpRequestWithBody request = client.post(webhook.getUrl());
+      webhook.getHookImplementation().setHeader(request);
+      request
         .spanKind("Webhook")
         .contentType(MediaType.APPLICATION_JSON)
         .jsonContent(payload);
@@ -96,7 +105,7 @@ public class ArgoCDWebhookExecutor implements WebHookExecutor {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
           request.getContent().process(baos);
           String digest = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, webhook.getSecret()).hmacHex(baos.toByteArray());
-          request.header("X-SCM-Signature", "sha1=" + digest);
+          webhook.getHookImplementation().setSecurityHeader(request, digest);
         }
       }
 
