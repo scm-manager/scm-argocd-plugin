@@ -2350,10 +2350,10 @@
     redux "^4.0.0"
     styled-components "^5.3.5"
 
-"@scm-manager/ui-scripts@2.47.0":
-  version "2.47.0"
-  resolved "https://registry.yarnpkg.com/@scm-manager/ui-scripts/-/ui-scripts-2.47.0.tgz#ff0e7fcc690306b679ccc22465e7cf5873228301"
-  integrity sha512-ucCLGNeKDXwnfCPxELV9m4tWpSfm0GTvN9F1Le6pAlI7oNt2yc5e0R0oeMZyjwKbxw524OrWSWMBJWTYzh8gDw==
+"@scm-manager/ui-scripts@2.46.4":
+  version "2.46.4"
+  resolved "https://registry.yarnpkg.com/@scm-manager/ui-scripts/-/ui-scripts-2.46.4.tgz#8034ac608d94ee2f37d9f396a821860434f1defc"
+  integrity sha512-WebTh86pg+N0+e/xJ4I1QWISKInJUbMNdy//9zELp6hoZA2NucBsU0Ao7kk68whBuzW9NPHm+L6fKgE+1K7tMg==
   dependencies:
     "@pmmmwh/react-refresh-webpack-plugin" "^0.5.5"
     autoprefixer "^10.4.4"
