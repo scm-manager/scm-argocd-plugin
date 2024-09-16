@@ -2,7 +2,7 @@
   "name": "@scm-manager/scm-argocd-plugin",
   "private": true,
   "version": "3.0.0",
-  "license": "AGPLv3",
+  "license": "AGPL-3.0-only",
   "main": "./src/main/js/index.tsx",
   "scripts": {
     "build": "plugin-scripts build",
