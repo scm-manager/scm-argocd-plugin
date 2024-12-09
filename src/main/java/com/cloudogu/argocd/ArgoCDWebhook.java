@@ -17,6 +17,10 @@
 package com.cloudogu.argocd;
 
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,11 +30,6 @@ import lombok.Setter;
 import lombok.ToString;
 import sonia.scm.webhook.SingleWebHookConfiguration;
 import sonia.scm.xml.XmlEncryptionAdapter;
-
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -42,7 +41,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @AllArgsConstructor
 @Data
 public class ArgoCDWebhook implements SingleWebHookConfiguration {
-  private HookImplementation hookImplementation = HookImplementation.GITHUB;
+  private HookImplementation hookImplementation;
   private String url;
   @XmlJavaTypeAdapter(XmlEncryptionAdapter.class)
   private String secret;

@@ -16,5 +16,5 @@
 
 package com.cloudogu.argocd;
 
-interface PushEventPayload {
+public interface PushEventPayload {
 }

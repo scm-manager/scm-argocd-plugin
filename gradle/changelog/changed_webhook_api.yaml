@@ -1,2 +1,4 @@
 - type: changed
   description: ArgoCD Webhook payload adjusted to SCM-Manager specific webhook endpoint
+- type: added
+  description: Support for pull request webhooks and therefore ArgoCD application sets

@@ -2,25 +2,24 @@
   "scm-argocd-plugin": {
     "config": {
       "hookImplementation": "Webhook implementation",
-      "hookImplementationHelpText": "The implementation to use for the webhook. It can either use the native SCM-Manager support of Argo-CD or the GitHub API. Argo-CD must be configured accordingly.",
+      "hookImplementationHelpText": "The webhook implementation may vary between a native SCM-Manager interface for Argo CD and the GitHub API. The SCM-Manager implementation is only functional in newer Argo CD versions and supports both commit (push) and pull request events; in case of incompatibilities, the GitHub legacy variant ought to be selected. This only supports push events.",
       "hookImplementationTypes": {
         "SCMM": "SCM-Manager",
-        "GITHUB": "GitHub"
+        "GITHUB": "GitHub (Legacy)"
       },
-      "httpMethod": "HTTP Method",
       "url": "URL",
-      "urlHelpText": "The complete ArgoCD webhook endpoint url, e.g.: \"https://my-argo.cloudogu.net/api/webhook\"",
-      "secret": "Secret",
-      "secretHelpText": "Optional GitHub Secret for ArgoCD webhooks. The same secret must be configured as GitHub secret inside the ArgoCD secret in your cluster. \nGuide: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/webhook.md",
-      "insecure": "Send webhook \"insecure\"",
-      "insecureHelpText": "Insecure webhooks will ignore hostname validation and invalid certificates",
-      "insecureWarning": "This webhook is set to \"insecure\". This mode should only be used for testing purpose and never be activated in production."
+      "urlHelpText": "The URL of the ArgoCD instance/subapplication, e.g.: \"https://my-argo.cloudogu.net\".Note: For every required webhook endpoint, an own webhook along with a full address needs to be created.\nA more detailled manual is provided by the official Argo CD documentation regarding ApplicationSets.",
+      "secret": "Secret token (optional)",
+      "secretHelpText": "(Optional:) Secret token for Argo CD webhooks. They are required to exist within the Argo CD cluster and must be equal to the secret provided by the webhook's payload if they are used.",
+      "insecure": "Send webhook \"insecurely\"",
+      "insecureHelpText": "Insecure webhooks ignore invalid certificates and don't validate host names. It is strongly advised not to use them in production.",
+      "insecureWarning": "This webhook is sent in an \"insecure\" fashion. This mode is unsuitable for production purposes and it is recommended to restrict its usage to testing environments."
     },
     "overviewMethod": "Method"
   },
   "webhooks": {
     "ArgoCDWebhook": {
-      "name": "ArgoCD"
+      "name": "Argo CD"
     }
   }
 }

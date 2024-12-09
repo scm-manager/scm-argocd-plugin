@@ -16,38 +16,44 @@
 
 package com.cloudogu.argocd;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import jakarta.xml.bind.annotation.XmlElement;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /*
- * We use the GitHub Push Event instead of implementing our own webhook event definition into ArgoCD.
  * We do not send information like the changed files or revisions on purpose.
  * ArgoCD assumes if nothing has been sent that it must refresh all related cluster resources for that repository which is exactly what we want.
  */
 @Getter
-public class ScmPushEventPayload implements PushEventPayload {
-  @XmlElement(name = "html_url")
-  private String htmlUrl;
-  @XmlElement(name = "branch")
-  private WebhookBranch branch;
+@ToString
+@EqualsAndHashCode
+class GitHubPushEventPayload implements PushEventPayload {
+  private final GitHubRepository repository;
+  private final List<String> commits;
+  private final String ref;
 
-  public ScmPushEventPayload(String htmlUrl, boolean defaultBranch, String branchName) {
-    this.htmlUrl = htmlUrl;
-    this.branch = new WebhookBranch(defaultBranch, branchName);
+  GitHubPushEventPayload(String sourceUrl, String defaultBranch, String branch) {
+    this.repository = new GitHubRepository(sourceUrl, defaultBranch);
+    this.ref = "refs/heads/" + branch;
+    this.commits = new ArrayList<>();
   }
 
   @AllArgsConstructor
-  @NoArgsConstructor
   @Getter
-  public class WebhookBranch{
+  @ToString
+  @EqualsAndHashCode
+  static class GitHubRepository {
+    // HTML URL has been chosen deliberately; it is from the GitHub API:
+    @XmlElement(name = "html_url")
+    private String htmlUrl;
     @XmlElement(name = "default_branch")
-    private boolean defaultBranch;
-    @XmlElement(name = "name")
-    private String name;
+    private String defaultBranch;
   }
 }
 

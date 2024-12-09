@@ -16,25 +16,41 @@
 
 package com.cloudogu.argocd;
 
-import sonia.scm.net.ahc.BaseHttpRequest;
+import sonia.scm.webhook.WebhookHeader;
 
 enum HookImplementation {
-  SCMM,
-  GITHUB;
-
-  void setHeader(BaseHttpRequest<?> request) {
-    if (this == SCMM) {
-      request.header("X-SCM-PushEvent", "Push");
-    } else {
-      request.header("X-Github-Event", "push");
+  SCMM {
+    @Override
+    WebhookHeader getHeader(EventType eventType) {
+      return switch (eventType) {
+        case PUSH_EVENT -> new WebhookHeader("X-SCM-Event", "Push", false);
+        case PULL_REQUEST_EVENT -> new WebhookHeader("X-SCM-Event", "PullRequest", false);
+      };
     }
-  }
 
-  public void setSecurityHeader(BaseHttpRequest<?> request, String digest) {
-    if (this == SCMM) {
-      request.header("X-SCM-Signature", "sha1=" + digest);
-    } else {
-      request.header("X-Hub-Signature", "sha1=" + digest);
+    @Override
+    String getSecurityHeaderKey() {
+      return "X-SCM-Signature";
     }
-  }
+  },
+  GITHUB {
+    @Override
+    WebhookHeader getHeader(EventType eventType) {
+      return switch (eventType) {
+        case PUSH_EVENT -> new WebhookHeader("X-Github-Event", "Push", false);
+        case PULL_REQUEST_EVENT -> new WebhookHeader("X-Github-Event", "PullRequest", false);
+      };
+    }
+
+    @Override
+    String getSecurityHeaderKey() {
+      return "X-Hub-Signature";
+    }
+  };
+
+  abstract WebhookHeader getHeader(EventType eventType);
+
+  abstract String getSecurityHeaderKey();
+
+  enum EventType {PUSH_EVENT, PULL_REQUEST_EVENT}
 }

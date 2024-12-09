@@ -1,13 +1,12 @@
 {
   "scm-argocd-plugin": {
     "config": {
-      "hookImplementation": "Webhook Implementierung",
-      "hookImplementationHelpText": "Die Implementierung, die für den Webhook verwendet werden soll. Es kann entweder die native SCM-Manager Unterstützung von Argo-CD oder aber die GitHub API genutzt werden. Argo-CD muss dementsprecend konfiguriert sein.",
-      "httpMethod": "HTTP Methode",
+      "hookImplementation": "Webhook-Implementierung",
+      "hookImplementationHelpText": "Die Webhook-Implementierung kann zwischen einer nativen SCM-Manager-Schnittstelle für Argo CD und der GitHub-API ausgewählt werden. Die SCM-Manager-Implementierung ist nur in neueren Argo-CD-Versionen lauffähig. Sie löst nach Commits auf Branches und Pull Requests aus. Ältere sind aus Legacygründen mit der GitHub-Variante anzusteuern. Diese unterstützen nur Commits.",
       "url": "URL",
-      "urlHelpText": "Die vollständige URL des ArgoCD Webhook Endpunktes, z. B.: \"https://mein-argo.cloudogu.net/api/webhook\"",
-      "secret": "Token",
-      "secretHelpText": "Optionales GitHub Secret für ArgoCD Webhooks. Zum Verwenden muss der Token in dem ArgoCD Secret im Cluster als GitHub Secret existieren. \nAnleitung: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/webhook.md",
+      "urlHelpText": "Die URL der Argo-CD-Instanz/Unteranwendung, z. B.: \"https://mein-argo.cloudogu.net\". Hinweis: Für jeden anzusteuernden Webhook-Endpunkt muss ein eigener Webhook mit vollständiger Adresse angelegt werden.\nEine genauere Anleitung ist unter der offiziellen Argo-CD-Dokumentation verfügbar bezüglich ApplicationSets.",
+      "secret": "Secret-Token (optional)",
+      "secretHelpText": "(Optional:) Secret für Argo-CD-Webhooks. Zum Verwenden muss der Token in dem Argo CD-Secret im Cluster als Secret existieren und der Hook-Implementierung entsprechen.",
       "insecure": "Webhook \"unsicher\" versenden",
       "insecureHelpText": "Unsichere Webhooks ignorieren ungültige Zertifikate und die Validierung des Hostnamen",
       "insecureWarning": "Dieser Webhook wird \"unsicher\" versendet. Dieser Modus ist nur für Testzwecke geeignet und sollte nicht im produktiven System genutzt werden."
@@ -16,7 +15,7 @@
   },
   "webhooks": {
     "ArgoCDWebhook": {
-      "name": "ArgoCD"
+      "name": "Argo CD"
     }
   }
 }

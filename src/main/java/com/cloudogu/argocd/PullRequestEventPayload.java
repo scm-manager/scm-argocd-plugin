@@ -14,28 +14,7 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-plugins {
-  id 'org.scm-manager.smp' version '0.17.0'
-}
+package com.cloudogu.argocd;
 
-dependencies {
-  plugin "sonia.scm.plugins:scm-webhook-plugin:3.0.1-SNAPSHOT"
-  optionalPlugin "sonia.scm.plugins:scm-review-plugin:3.0.0"
-
-  implementation "commons-codec:commons-codec:1.15"
-}
-
-scmPlugin {
-  scmVersion = "3.0.0"
-  displayName = "Argo CD"
-  description = "Integrates Argo CD build pipelines"
-
-  author = "Cloudogu GmbH"
-  category = "Continuous Integration"
-
-  openapi {
-    packages = [
-      "com.cloudogu.argocd"
-    ]
-  }
+public interface PullRequestEventPayload {
 }
