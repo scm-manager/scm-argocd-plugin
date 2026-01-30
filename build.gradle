@@ -22,7 +22,7 @@ dependencies {
   plugin "sonia.scm.plugins:scm-webhook-plugin:3.0.1-SNAPSHOT"
   optionalPlugin "sonia.scm.plugins:scm-review-plugin:3.0.0"
 
-  implementation "commons-codec:commons-codec:1.15"
+  implementation "commons-codec:commons-codec:1.21.0"
 }
 
 scmPlugin {
