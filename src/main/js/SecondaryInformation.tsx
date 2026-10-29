@@ -14,8 +14,8 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-import React, { FC } from "react";
+import React, { FC, PropsWithChildren } from "react";
 
-const SecondaryInformation: FC = ({ children }) => <small className="has-text-grey px-2">{children}</small>;
+const SecondaryInformation: FC<PropsWithChildren> = ({ children }) => <small className="has-text-grey px-2">{children}</small>;
 
 export default SecondaryInformation;

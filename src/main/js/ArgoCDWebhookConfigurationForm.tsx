@@ -16,8 +16,7 @@
 
 import React, { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { Form } from "@scm-manager/ui-forms";
-import { Notification } from "@scm-manager/ui-components";
+import { Form, Notification } from "@scm-manager/ui-core";
 
 export type ArgoCDWebhook = {
   hookImplementation: string;

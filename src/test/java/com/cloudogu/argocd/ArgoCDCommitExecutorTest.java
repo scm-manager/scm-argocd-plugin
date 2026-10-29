@@ -93,9 +93,13 @@ class ArgoCDCommitExecutorTest {
 
 
   @Test
-  void shouldThrowExceptionForMissingHttpProtocol() {
+  void shouldThrowExceptionForMissingHttpProtocol() throws IOException {
+    when(branchesCommandBuilder.getBranches()).thenReturn(
+      new Branches(singletonList(Branch.defaultBranch("main", "abc", 0L, new Person())))
+    );
+
     when(event.getContext().getBranchProvider().getCreatedOrModified()).thenReturn(singletonList("main"));
-    when(service.getSupportedProtocols()).thenReturn(Stream.of());
+    when(service.getSupportedProtocols()).thenAnswer(invocation -> Stream.of());
 
     ArgoCDCommitExecutor executor = createExecutor(new ArgoCDWebhook(SCMM, "https://argo-test.com", "", false));
 
